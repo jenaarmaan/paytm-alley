@@ -112,25 +112,38 @@ export const AlleyFlowConsole: React.FC<AlleyFlowConsoleProps> = ({
     setCurrentStep(1);
 
     // Parse amount from text if present
-    const matchedNum = text.match(/(\d+(?:,\d+)*(?:\.\d+)?)\s*(?:lakh|lac|k|thousand|rupee|rs)?/i);
-    if (text.toLowerCase().includes('2 lakh') || text.toLowerCase().includes('2l')) {
-      setLoanAmount(200000);
+    const lower = text.toLowerCase();
+    let parsedAmount = 150000;
+    const lakhMatch = lower.match(/(\d+(?:\.\d+)?)\s*(?:lakh|lac|lakhs|latcham)/i);
+    const kMatch = lower.match(/(\d+(?:\.\d+)?)\s*(?:k|thousand|hazaar|hazar|saavira)/i);
+    const directNumMatch = lower.match(/(?:rs\.?|₹|inr)?\s*(\d{1,3}(?:,\d{3})+|\d{4,7})/i);
+
+    if (lakhMatch) {
+      parsedAmount = Math.round(parseFloat(lakhMatch[1]) * 100000);
+    } else if (kMatch) {
+      parsedAmount = Math.round(parseFloat(kMatch[1]) * 1000);
+    } else if (directNumMatch) {
+      parsedAmount = parseInt(directNumMatch[1].replace(/,/g, ''), 10);
+    } else if (lower.includes('panch hazaar') || lower.includes('5 hazaar') || lower.includes('5k') || lower.includes('5000')) {
+      parsedAmount = 5000;
+    } else if (lower.includes('dus hazaar') || lower.includes('das hazaar') || lower.includes('10k') || lower.includes('10000')) {
+      parsedAmount = 10000;
+    } else if (lower.includes('2 lakh') || lower.includes('2l')) {
+      parsedAmount = 200000;
+    } else if (lower.includes('1 lakh') || lower.includes('1l')) {
+      parsedAmount = 100000;
+    }
+
+    setLoanAmount(parsedAmount);
+
+    if (lower.includes('diwali') || lower.includes('festival') || lower.includes('stock') || lower.includes('inventory')) {
       setLoanPurpose('Festival Stocking & Bulk Inventory');
-    } else if (text.toLowerCase().includes('1 lakh') || text.toLowerCase().includes('1l')) {
-      setLoanAmount(100000);
-      setLoanPurpose('Equipment Purchase & Store Upgrade');
-    } else if (text.toLowerCase().includes('80000') || text.toLowerCase().includes('80k')) {
-      setLoanAmount(80000);
-      setLoanPurpose('Emergency Working Capital & Medicine Stock');
-    } else if (matchedNum) {
-      const val = parseFloat(matchedNum[1].replace(/,/g, ''));
-      if (text.toLowerCase().includes('lakh') || text.toLowerCase().includes('lac')) {
-        setLoanAmount(val * 100000);
-      } else if (val < 1000) {
-        setLoanAmount(val * 100000);
-      } else {
-        setLoanAmount(val);
-      }
+    } else if (lower.includes('oven') || lower.includes('repair') || lower.includes('machine') || lower.includes('equipment')) {
+      setLoanPurpose('Equipment Repair & Store Upgrade');
+    } else if (lower.includes('medicine') || lower.includes('emergency') || lower.includes('turant')) {
+      setLoanPurpose('Emergency Working Capital & Liquidity');
+    } else {
+      setLoanPurpose('Operational Working Capital');
     }
 
     // Step 1: NLP Extraction

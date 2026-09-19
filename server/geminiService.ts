@@ -57,9 +57,9 @@ export function fallbackExtractIntent(
 
   // Extract amount
   let amount: number | null = null;
-  const lakhMatch = lower.match(/(\d+(\.\d+)?)\s*(lakh|lac|lakhs|lakh rupees|lakh ka)/i);
-  const directNumMatch = lower.match(/(?:rs\.?|₹|inr)?\s*(\d{1,3}(?:,\d{3})+|\d{4,7})/i);
-  const kMatch = lower.match(/(\d+)\s*(?:k|thousand|hazaar)/i);
+  const lakhMatch = lower.match(/(\d+(\.\d+)?)\s*(lakh|lac|lakhs|lakh rupees|lakh ka|latcham)/i);
+  const directNumMatch = lower.match(/(?:rs\.?|₹|inr)?\s*(\d{1,3}(?:,\d{3})+|\d{3,7})/i);
+  const kMatch = lower.match(/(\d+)\s*(?:k|thousand|hazaar|hazar|saavira)/i);
 
   if (lakhMatch) {
     amount = Math.round(parseFloat(lakhMatch[1]) * 100000);
@@ -67,6 +67,14 @@ export function fallbackExtractIntent(
     amount = Math.round(parseFloat(kMatch[1]) * 1000);
   } else if (directNumMatch) {
     amount = parseInt(directNumMatch[1].replace(/,/g, ''), 10);
+  } else if (lower.includes('panch hazaar') || lower.includes('paanch hazaar') || lower.includes('5 hazaar') || lower.includes('5k')) {
+    amount = 5000;
+  } else if (lower.includes('das hazaar') || lower.includes('dus hazaar') || lower.includes('10 hazaar') || lower.includes('10k')) {
+    amount = 10000;
+  } else if (lower.includes('bees hazaar') || lower.includes('20 hazaar') || lower.includes('20k')) {
+    amount = 20000;
+  } else if (lower.includes('pachas hazaar') || lower.includes('pachaas hazaar') || lower.includes('50 hazaar') || lower.includes('50k')) {
+    amount = 50000;
   } else if (lower.includes('75,000') || lower.includes('75000') || lower.includes('75 thousand')) {
     amount = 75000;
   } else if (lower.includes('1 lakh') || lower.includes('one lakh')) {

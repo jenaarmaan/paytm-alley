@@ -113,7 +113,6 @@ export function calculateEligibility(
   const sales = merchant.monthlySales || merchant.monthlyCashflow || 100000;
   const maxRepaymentCapacity = calculateRepaymentCapacity(merchant, config);
   const maxEligible = calculateMaxLoanAmount(merchant, tenureMonths, config);
-  const minEligible = Math.max(15000, Math.round(sales * 0.25));
   const dynamicRate = calculateDynamicInterestRate(merchant);
 
   // Rule verification
@@ -147,13 +146,30 @@ export function calculateEligibility(
 
   const isEligible = vintagePassed && repaymentPassed && capacityPassed;
 
-  // Recommended amount: minimum of requested and maxEligible
-  let recommendedAmount = isEligible ? Math.min(requestedAmount, maxEligible) : 0;
-  if (recommendedAmount < minEligible && isEligible) {
-    recommendedAmount = minEligible;
+  // Sachet micro-credit floor is ₹1,000
+  const minEligible = 1000;
+
+  // Recommended amount: Honor exact requested amount when within maxEligible
+  let recommendedAmount = 0;
+  if (isEligible) {
+    if (requestedAmount > 0) {
+      if (requestedAmount <= maxEligible) {
+        // Exact requested amount approved (sachet / micro working capital)
+        recommendedAmount = Math.max(minEligible, requestedAmount);
+      } else {
+        // Capped to maximum safe debt ceiling
+        recommendedAmount = maxEligible;
+      }
+    } else {
+      // Default working capital recommendation if no amount was spoken
+      recommendedAmount = Math.min(maxEligible, Math.max(10000, Math.round(sales * 0.25)));
+    }
   }
-  // Round to ₹5,000 increments
-  recommendedAmount = Math.round(recommendedAmount / 5000) * 5000;
+
+  // Clean rounding: if >= 10k round to 1k increments, if < 10k keep exact or 500
+  if (recommendedAmount >= 10000) {
+    recommendedAmount = Math.round(recommendedAmount / 1000) * 1000;
+  }
 
   const currentDebtRatio = ((merchant.existingEMI / sales) * 100);
 
@@ -184,9 +200,16 @@ export function calculateEligibility(
     },
   ];
 
-  const explanationSummary = isEligible
-    ? `Based on ${merchant.businessName}'s ${(merchant.businessVintageMonths / 12).toFixed(1)}-year operating history and monthly turnover of ₹${sales.toLocaleString('en-IN')}, you qualify for a working capital credit offer up to ₹${maxEligible.toLocaleString('en-IN')} at ${dynamicRate}% p.a.`
-    : `Application cannot proceed automatically because cashflow headroom is insufficient or minimum business vintage criteria were not met.`;
+  let explanationSummary = '';
+  if (!isEligible) {
+    explanationSummary = `Application cannot proceed automatically because cashflow headroom is insufficient or minimum business vintage criteria were not met.`;
+  } else if (requestedAmount > 0 && requestedAmount <= maxEligible) {
+    explanationSummary = `Based on ${merchant.businessName}'s ${(merchant.businessVintageMonths / 12).toFixed(1)}-year operating history and monthly turnover of ₹${sales.toLocaleString('en-IN')}, your requested working capital loan of ₹${requestedAmount.toLocaleString('en-IN')} is approved at ${dynamicRate}% p.a. (Total credit capacity up to ₹${maxEligible.toLocaleString('en-IN')}).`;
+  } else if (requestedAmount > maxEligible) {
+    explanationSummary = `Based on 30% debt-service ratio and monthly turnover of ₹${sales.toLocaleString('en-IN')}, your loan request of ₹${requestedAmount.toLocaleString('en-IN')} has been calibrated to your maximum safe credit ceiling of ₹${maxEligible.toLocaleString('en-IN')} at ${dynamicRate}% p.a.`;
+  } else {
+    explanationSummary = `Based on ${merchant.businessName}'s ${(merchant.businessVintageMonths / 12).toFixed(1)}-year operating history and monthly turnover of ₹${sales.toLocaleString('en-IN')}, you qualify for a working capital credit offer up to ₹${maxEligible.toLocaleString('en-IN')} at ${dynamicRate}% p.a.`;
+  }
 
   return {
     merchantId: merchant.merchantId,

@@ -88,40 +88,53 @@ export const EligibilityCard: React.FC<EligibilityCardProps> = ({
 
       {/* Comparison Grid: Requested vs Cap vs Recommended */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-        <div className="p-4 rounded-xl bg-slate-50 border border-slate-100">
-          <div className="text-xs font-semibold text-slate-500 mb-1">
-            Requested Amount
+        <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
+          <div className="flex items-center justify-between text-xs font-semibold text-slate-500 mb-1">
+            <span>Requested Amount</span>
+            {eligibility.requestedAmount <= eligibility.eligibleMaxAmount ? (
+              <span className="text-[10px] text-emerald-700 font-bold bg-emerald-100 px-1.5 py-0.2 rounded">
+                Approved
+              </span>
+            ) : (
+              <span className="text-[10px] text-amber-700 font-bold bg-amber-100 px-1.5 py-0.2 rounded">
+                Capped
+              </span>
+            )}
           </div>
-          <div className="text-xl font-bold text-slate-700 line-through">
+          <div className={`text-xl font-black text-slate-800 dark:text-white font-mono`}>
             ₹{eligibility.requestedAmount.toLocaleString('en-IN')}
           </div>
-          <div className="text-[11px] text-slate-400 mt-1">
-            Original voice request
+          <div className="text-[11px] text-slate-500 mt-1">
+            {eligibility.requestedAmount <= eligibility.eligibleMaxAmount
+              ? 'Exact requested amount sanctioned'
+              : 'Requested amount exceeded safe ratio'}
           </div>
         </div>
 
-        <div className="p-4 rounded-xl bg-slate-50 border border-slate-100">
+        <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
           <div className="text-xs font-semibold text-slate-500 mb-1">
-            Max Eligible Cap
+            Max Credit Capacity
           </div>
-          <div className="text-xl font-bold text-slate-800">
+          <div className="text-xl font-black text-indigo-700 dark:text-indigo-400 font-mono">
             ₹{eligibility.eligibleMaxAmount.toLocaleString('en-IN')}
           </div>
           <div className="text-[11px] text-slate-500 mt-1">
-            Based on 30% debt-service ratio
+            Based on 30% debt-service capacity
           </div>
         </div>
 
-        <div className="p-4 rounded-xl bg-emerald-50/80 border border-emerald-200">
-          <div className="text-xs font-bold text-emerald-800 mb-1 flex items-center gap-1">
+        <div className="p-4 rounded-xl bg-emerald-50/90 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-700 shadow-2xs">
+          <div className="text-xs font-bold text-emerald-800 dark:text-emerald-300 mb-1 flex items-center gap-1">
             <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-            <span>Recommended Working Capital</span>
+            <span>Sanctioned Capital Offer</span>
           </div>
-          <div className="text-2xl font-black text-emerald-700">
+          <div className="text-2xl font-black text-emerald-700 dark:text-emerald-400 font-mono">
             ₹{offer.loanAmount.toLocaleString('en-IN')}
           </div>
-          <div className="text-[11px] text-emerald-800 font-medium mt-1">
-            Safe debt ceiling for this store
+          <div className="text-[11px] text-emerald-800 dark:text-emerald-300 font-medium mt-1">
+            {offer.loanAmount === eligibility.requestedAmount
+              ? '100% Match of requested loan'
+              : 'Safe working capital sanction'}
           </div>
         </div>
       </div>
