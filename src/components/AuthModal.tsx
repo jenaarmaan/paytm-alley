@@ -37,82 +37,49 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   onAuthSuccess,
   merchants,
 }) => {
-  const [activeTab, setActiveTab] = useState<'signin' | 'demolist' | 'signup'>(
-    initialMode === 'register' ? 'signup' : 'signin'
-  );
+  const [activeTab, setActiveTab] = useState<'signin' | 'demolist'>('demolist');
   const [mobileNumber, setMobileNumber] = useState('');
   const [otp, setOtp] = useState('');
   const [isOtpSent, setIsOtpSent] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-
-  // Registration Form State
-  const [regName, setRegName] = useState('');
-  const [regBusinessName, setRegBusinessName] = useState('');
-  const [regSector, setRegSector] = useState('Kirana & Daily Staples');
-  const [regMonthlySales, setRegMonthlySales] = useState(180000);
-  const [regVintageMonths, setRegVintageMonths] = useState(36);
-  const [regExistingEMI, setRegExistingEMI] = useState(5000);
-  const [regLocation, setRegLocation] = useState('Kanpur, Uttar Pradesh');
-  const [regLanguage, setRegLanguage] = useState<SupportedLanguage>('Hinglish');
 
   if (!isOpen) return null;
 
   // 1-Click Quick Login by Merchant ID
   const handleQuickLogin = (merchantId: string) => {
     setIsLoading(true);
-    setTimeout(() => {
-      const loggedInMerchant = authService.login(merchantId, 'quick_demo');
-      setIsLoading(false);
-      onAuthSuccess(loggedInMerchant);
+    try {
+      const merchant = authService.login(merchantId, 'quick_demo');
+      onAuthSuccess(merchant);
       onClose();
-    }, 250);
+    } catch (e) {
+      console.error('Quick login error:', e);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  // Mobile + OTP Login
+  // Mobile + OTP Flow
   const handleSendOtp = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!mobileNumber || mobileNumber.length < 10) return;
+    if (mobileNumber.length < 10) return;
     setIsLoading(true);
     setTimeout(() => {
       setIsOtpSent(true);
-      setOtp('420108'); // Auto-populate for quick testing
       setIsLoading(false);
-    }, 350);
+      setOtp('1234'); // Pre-fill sample OTP for seamless testing
+    }, 400);
   };
 
   const handleVerifyOtp = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!otp) return;
     setIsLoading(true);
     setTimeout(() => {
       const merchant = authService.loginWithMobile(mobileNumber, otp);
-      setIsLoading(false);
       onAuthSuccess(merchant);
-      onClose();
-    }, 350);
-  };
-
-  // Registration / Onboarding
-  const handleRegister = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!regName.trim() || !regBusinessName.trim()) return;
-    setIsLoading(true);
-
-    setTimeout(() => {
-      const newMerchant = authService.registerMerchant({
-        name: regName.trim(),
-        businessName: regBusinessName.trim(),
-        tradeSector: regSector,
-        monthlySales: regMonthlySales,
-        businessVintageMonths: regVintageMonths,
-        existingEMI: regExistingEMI,
-        location: regLocation,
-        preferredLanguage: regLanguage,
-      });
       setIsLoading(false);
-      onAuthSuccess(newMerchant);
       onClose();
-    }, 450);
+    }, 400);
   };
 
   const merchantList = Object.values(merchants);
@@ -178,18 +145,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           >
             <Users className="w-4 h-4" />
             <span>Demo Role Logins (List View)</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('signup')}
-            className={`flex items-center gap-2 py-3 px-3.5 text-xs font-bold border-b-2 transition-all whitespace-nowrap cursor-pointer ${
-              activeTab === 'signup'
-                ? 'border-emerald-400 text-emerald-400 bg-slate-900/60'
-                : 'border-transparent text-slate-400 hover:text-slate-200'
-            }`}
-          >
-            <UserPlus className="w-4 h-4" />
-            <span>Sign Up / Register New</span>
           </button>
         </div>
 
@@ -393,158 +348,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 ))}
               </div>
             </div>
-          )}
-
-          {/* TAB 3: SIGN UP / ONBOARD NEW MERCHANT FORM */}
-          {activeTab === 'signup' && (
-            <form onSubmit={handleRegister} className="space-y-4">
-              <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xs space-y-4">
-                <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
-                  <div>
-                    <h3 className="text-sm font-extrabold text-slate-900 dark:text-white">
-                      Register &amp; Onboard Business Profile
-                    </h3>
-                    <p className="text-xs text-slate-500 mt-0.5">
-                      Create a new merchant account with instant Account Aggregator digital credit scoring.
-                    </p>
-                  </div>
-                  <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2.5 py-1 rounded-lg">
-                    Instant Active Session
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-                  <div>
-                    <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
-                      Merchant Owner Name *
-                    </label>
-                    <input
-                      type="text"
-                      value={regName}
-                      onChange={(e) => setRegName(e.target.value)}
-                      placeholder="e.g. Armaan Jena"
-                      className="w-full px-3.5 py-2.5 border border-slate-300 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-medium"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
-                      Store / Business Name *
-                    </label>
-                    <input
-                      type="text"
-                      value={regBusinessName}
-                      onChange={(e) => setRegBusinessName(e.target.value)}
-                      placeholder="e.g. Armaan Electronics &amp; Mobiles"
-                      className="w-full px-3.5 py-2.5 border border-slate-300 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-medium"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
-                      Trade Sector
-                    </label>
-                    <select
-                      value={regSector}
-                      onChange={(e) => setRegSector(e.target.value)}
-                      className="w-full px-3.5 py-2.5 border border-slate-300 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-medium"
-                    >
-                      <option value="Kirana & Daily Staples">Kirana &amp; Daily Staples</option>
-                      <option value="Consumer Electronics & Mobiles">Consumer Electronics &amp; Mobiles</option>
-                      <option value="Textiles & Handloom Weaving">Textiles &amp; Apparel</option>
-                      <option value="Food & Beverage / QSR Stall">Food &amp; Beverage / QSR</option>
-                      <option value="FMCG Wholesale & Distribution">FMCG Wholesale</option>
-                      <option value="Pharmacy & Healthcare">Pharmacy &amp; Healthcare</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
-                      Location / City
-                    </label>
-                    <input
-                      type="text"
-                      value={regLocation}
-                      onChange={(e) => setRegLocation(e.target.value)}
-                      placeholder="e.g. Bhubaneswar, Odisha"
-                      className="w-full px-3.5 py-2.5 border border-slate-300 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-medium"
-                    />
-                  </div>
-
-                  <div className="sm:col-span-2 space-y-2 pt-2 border-t border-slate-100 dark:border-slate-800">
-                    <div className="flex items-center justify-between">
-                      <label className="font-bold text-slate-700 dark:text-slate-300">
-                        Monthly Sales Turnover: <strong className="text-emerald-600 dark:text-emerald-400 font-mono text-sm">₹{regMonthlySales.toLocaleString('en-IN')}</strong>
-                      </label>
-                      <span className="text-[10px] text-slate-400 font-mono">
-                        (Daily UPI Inflow ~₹{Math.round(regMonthlySales / 30).toLocaleString('en-IN')})
-                      </span>
-                    </div>
-                    <input
-                      type="range"
-                      min={20000}
-                      max={1000000}
-                      step={10000}
-                      value={regMonthlySales}
-                      onChange={(e) => setRegMonthlySales(Number(e.target.value))}
-                      className="w-full accent-emerald-600 cursor-pointer"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
-                      Business Vintage
-                    </label>
-                    <select
-                      value={regVintageMonths}
-                      onChange={(e) => setRegVintageMonths(Number(e.target.value))}
-                      className="w-full px-3.5 py-2.5 border border-slate-300 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-medium"
-                    >
-                      <option value={12}>1 Year Operational</option>
-                      <option value={24}>2 Years Operational</option>
-                      <option value={36}>3 Years Operational</option>
-                      <option value={48}>4+ Years Operational</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
-                      Preferred Dialect / Language
-                    </label>
-                    <select
-                      value={regLanguage}
-                      onChange={(e) => setRegLanguage(e.target.value as any)}
-                      className="w-full px-3.5 py-2.5 border border-slate-300 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-medium"
-                    >
-                      <option value="Hinglish">Hinglish</option>
-                      <option value="Hindi">Hindi</option>
-                      <option value="Tamil">Tamil</option>
-                      <option value="Kannada">Kannada</option>
-                      <option value="Telugu">Telugu</option>
-                      <option value="Bengali">Bengali</option>
-                      <option value="English">English</option>
-                    </select>
-                  </div>
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={isLoading || !regName.trim() || !regBusinessName.trim()}
-                  className="w-full py-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 text-white font-bold text-xs rounded-xl shadow-md flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 mt-4"
-                >
-                  {isLoading ? (
-                    <RefreshCw className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <>
-                      <UserPlus className="w-4 h-4" />
-                      <span>Complete Registration &amp; Sign In</span>
-                    </>
-                  )}
-                </button>
-              </div>
-            </form>
           )}
 
         </div>

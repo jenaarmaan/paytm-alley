@@ -20,8 +20,6 @@ import { FederatedSecurityConsole } from './components/FederatedSecurityConsole'
 import { CapitalFlowModal } from './components/CapitalFlowModal';
 import { TrustModal } from './components/TrustModal';
 import { PersonaPerspectiveBar } from './components/PersonaPerspectiveBar';
-import { MerchantOnboardingModal } from './components/MerchantOnboardingModal';
-import { MerchantOnboardingView } from './components/MerchantOnboardingView';
 import { AuthModal } from './components/AuthModal';
 import { FloatingAlleyWidget } from './components/FloatingAlleyWidget';
 import { AlleyFlowConsole } from './components/AlleyFlowConsole';
@@ -71,12 +69,11 @@ export function App() {
     return authService.isAuthenticated() ? 'merchant-dashboard' : 'landing';
   });
   const [selectedLanguage, setSelectedLanguage] = useState<SupportedLanguage>('Hinglish');
-  const [isOnboardingModalOpen, setIsOnboardingModalOpen] = useState<boolean>(false);
 
   // Active Merchant Profile
   const activeMerchant: Merchant = merchantsMap[selectedMerchantId] || Object.values(merchantsMap)[0] || SEEDED_MERCHANTS['M001'];
 
-  // Handle Authentication Success (Login or Registration)
+  // Handle Authentication Success (Login)
   const handleAuthSuccess = (merchant: Merchant) => {
     const updatedMerchants = authService.getMerchants();
     setMerchantsMap(updatedMerchants);
@@ -92,12 +89,6 @@ export function App() {
     setIsAuthenticated(false);
     stopVoiceFeedback();
     setCurrentView('landing');
-  };
-
-  // Handle Dynamic Merchant Onboarding
-  const handleOnboardMerchant = (newMerchant: Merchant) => {
-    const registered = authService.registerMerchant(newMerchant);
-    handleAuthSuccess(registered);
   };
 
   // Applications & Active Loans
@@ -461,10 +452,6 @@ export function App() {
         }}
         onLogout={handleLogout}
         onOpenCapitalFlow={() => setIsCapitalFlowModalOpen(true)}
-        onOpenOnboarding={() => {
-          setAuthModalMode('register');
-          setIsAuthModalOpen(true);
-        }}
         onOpenDocs={() => setIsDocsOpen(true)}
         onOpenSettings={() => setIsSettingsOpen(true)}
         autoVoiceEnabled={autoVoiceEnabled}
@@ -515,26 +502,16 @@ export function App() {
                   To retrieve verified store cash flows, calculate personalized credit limits, and initiate an RBI-compliant voice loan, please log in or select your merchant profile first.
                 </p>
               </div>
-              <div className="pt-2 flex flex-col sm:flex-row gap-3 justify-center">
+              <div className="pt-2 flex justify-center">
                 <button
                   id="btn-voice-auth-login"
                   onClick={() => {
                     setAuthModalMode('login');
                     setIsAuthModalOpen(true);
                   }}
-                  className="px-6 py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm shadow-lg shadow-emerald-600/20 transition-all cursor-pointer"
+                  className="px-8 py-3.5 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm shadow-lg shadow-emerald-600/20 transition-all cursor-pointer"
                 >
-                  Log In / Demo Profiles
-                </button>
-                <button
-                  id="btn-voice-auth-register"
-                  onClick={() => {
-                    setAuthModalMode('register');
-                    setIsAuthModalOpen(true);
-                  }}
-                  className="px-6 py-3 rounded-2xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 font-bold text-sm transition-all cursor-pointer"
-                >
-                  Register New Store
+                  Log In / Select Demo Profile
                 </button>
               </div>
             </div>
@@ -719,14 +696,6 @@ export function App() {
         {currentView === 'federated-security' && (
           <FederatedSecurityConsole />
         )}
-
-        {/* VIEW 10: REAL-TIME MERCHANT ONBOARDING ENGINE */}
-        {currentView === 'merchant-onboarding' && (
-          <MerchantOnboardingView
-            onMerchantCreated={handleOnboardMerchant}
-            onNavigate={setCurrentView}
-          />
-        )}
       </main>
 
       {/* Consent Modal */}
@@ -752,13 +721,6 @@ export function App() {
       <TrustModal
         isOpen={isTrustModalOpen}
         onClose={() => setIsTrustModalOpen(false)}
-      />
-
-      {/* Dynamic Merchant Onboarding Modal */}
-      <MerchantOnboardingModal
-        isOpen={isOnboardingModalOpen}
-        onClose={() => setIsOnboardingModalOpen(false)}
-        onMerchantCreated={handleOnboardMerchant}
       />
 
       {/* Real-time Floating Auto-Voice Audio Output Indicator */}
@@ -893,10 +855,6 @@ export function App() {
         }}
         activeEngine={activeAiEngine}
         onChangeEngine={(engine) => setActiveAiEngine(engine)}
-        onOpenOnboarding={() => {
-          setAuthModalMode('register');
-          setIsAuthModalOpen(true);
-        }}
       />
 
       {/* Dedicated Architecture, MCP & System Specifications Modal */}

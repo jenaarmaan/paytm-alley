@@ -15,14 +15,12 @@ interface PersonaPerspectiveBarProps {
   merchants: Record<string, Merchant>;
   activeMerchantId: string;
   onSelectMerchant: (merchantId: string) => void;
-  onOpenOnboarding: () => void;
 }
 
 export const PersonaPerspectiveBar: React.FC<PersonaPerspectiveBarProps> = ({
   merchants,
   activeMerchantId,
   onSelectMerchant,
-  onOpenOnboarding,
 }) => {
   const activeMerchant = merchants[activeMerchantId] || Object.values(merchants)[0];
 
@@ -115,16 +113,6 @@ export const PersonaPerspectiveBar: React.FC<PersonaPerspectiveBarProps> = ({
               );
             })}
           </div>
-
-          {/* "+ Onboard New Merchant" Action */}
-          <button
-            onClick={onOpenOnboarding}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-semibold shadow-md shadow-emerald-600/30 border border-emerald-400/30 transition-all hover:scale-[1.02] active:scale-[0.98] whitespace-nowrap ml-1"
-          >
-            <UserPlus className="w-3.5 h-3.5" />
-            <span>+ Onboard Merchant</span>
-            <Sparkles className="w-3 h-3 text-amber-300 animate-pulse" />
-          </button>
         </div>
 
       </div>

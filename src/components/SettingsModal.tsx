@@ -25,7 +25,6 @@ interface SettingsModalProps {
   onToggleAutoVoice: () => void;
   activeEngine: 'sarvam' | 'gemini' | 'deterministic';
   onChangeEngine: (engine: 'sarvam' | 'gemini' | 'deterministic') => void;
-  onOpenOnboarding?: () => void;
 }
 
 export const SettingsModal: React.FC<SettingsModalProps> = ({
@@ -40,7 +39,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   onToggleAutoVoice,
   activeEngine,
   onChangeEngine,
-  onOpenOnboarding,
 }) => {
   const [isPingingSarvam, setIsPingingSarvam] = useState(false);
   const [sarvamPingResult, setSarvamPingResult] = useState<{ latencyMs: number; success: boolean; response?: any; error?: string } | null>(null);
@@ -129,18 +127,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   Select a registered profile from the dropdown to immediately switch active business context.
                 </p>
               </div>
-              {onOpenOnboarding && (
-                <button
-                  onClick={() => {
-                    onClose();
-                    onOpenOnboarding();
-                  }}
-                  className="px-3 py-1.5 bg-emerald-50 dark:bg-emerald-950/60 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 text-xs font-bold rounded-xl border border-emerald-200 dark:border-emerald-800 flex items-center gap-1.5 self-start sm:self-auto cursor-pointer"
-                >
-                  <UserPlus className="w-3.5 h-3.5" />
-                  <span>+ Onboard New Merchant</span>
-                </button>
-              )}
             </div>
 
             {/* Dropdown Selector */}
