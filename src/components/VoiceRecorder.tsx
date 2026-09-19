@@ -376,26 +376,53 @@ export const VoiceRecorder: React.FC<VoiceRecorderProps> = ({
           ))}
         </div>
 
-        {/* Text Input Fallback */}
+        {/* Text Input Fallback with AI Core Dropdown */}
         {showManualInput && (
-          <form onSubmit={handleManualSubmit} className="mt-4 pt-4 border-t border-slate-100 flex gap-2">
-            <input
-              type="text"
-              id="manual-loan-input"
-              value={manualText}
-              onChange={(e) => setManualText(e.target.value)}
-              placeholder={t.typeYourRequest}
-              className="flex-1 px-3.5 py-2.5 text-xs sm:text-sm border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 bg-slate-50 focus:bg-white transition-colors"
-            />
-            <button
-              type="submit"
-              id="btn-manual-submit"
-              disabled={!manualText.trim()}
-              className="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 disabled:bg-slate-300 text-white rounded-xl text-xs font-bold flex items-center gap-2 transition-all shadow-sm"
-            >
-              <span>Process</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </button>
+          <form onSubmit={handleManualSubmit} className="mt-4 pt-4 border-t border-slate-100 space-y-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+              <div className="flex items-center gap-2 flex-wrap">
+                <label htmlFor="voice-recorder-ai-core" className="text-xs font-bold text-slate-800 flex items-center gap-1.5 shrink-0">
+                  <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
+                  <span>AI Core:</span>
+                </label>
+                <select
+                  id="voice-recorder-ai-core"
+                  value={activeEngine}
+                  onChange={(e) => handleSetEngine(e.target.value as any)}
+                  className="bg-white text-slate-900 border border-slate-300 rounded-lg px-3 py-1 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-2xs cursor-pointer"
+                >
+                  <option value="sarvam">⚡ Sarvam Indic LLM</option>
+                  <option value="gemini">✦ Gemini 2.5</option>
+                  <option value="deterministic">⚙️ Rule-Engine</option>
+                </select>
+              </div>
+
+              {activeEngine === 'sarvam' && (
+                <span className="text-[11px] text-amber-800 font-semibold px-2.5 py-0.5 rounded-lg bg-amber-100/70 border border-amber-300/80 inline-flex items-center gap-1 self-start sm:self-auto">
+                  <span>Powered by Sarvam AI Indic Sovereign Stack</span>
+                </span>
+              )}
+            </div>
+
+            <div className="flex gap-2">
+              <input
+                type="text"
+                id="manual-loan-input"
+                value={manualText}
+                onChange={(e) => setManualText(e.target.value)}
+                placeholder={t.typeYourRequest}
+                className="flex-1 px-3.5 py-2.5 text-xs sm:text-sm border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 bg-white transition-colors"
+              />
+              <button
+                type="submit"
+                id="btn-manual-submit"
+                disabled={!manualText.trim()}
+                className="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 disabled:bg-slate-300 text-white rounded-xl text-xs font-bold flex items-center gap-2 transition-all shadow-sm shrink-0 cursor-pointer"
+              >
+                <span>Process</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
           </form>
         )}
       </div>

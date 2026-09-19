@@ -22,6 +22,8 @@ import { TrustModal } from './components/TrustModal';
 import { PersonaPerspectiveBar } from './components/PersonaPerspectiveBar';
 import { MerchantOnboardingModal } from './components/MerchantOnboardingModal';
 import { MerchantOnboardingView } from './components/MerchantOnboardingView';
+import { FloatingAlleyWidget } from './components/FloatingAlleyWidget';
+import { AlleyFlowConsole } from './components/AlleyFlowConsole';
 import { CheckCircle2, Volume2, VolumeX, X } from 'lucide-react';
 import { speechService } from './services/speechService';
 import { getVoiceIntentAcknowledgement, getVoiceSubmissionAcknowledgement } from './services/translations';
@@ -114,6 +116,7 @@ export function App() {
   const [isConsentModalOpen, setIsConsentModalOpen] = useState<boolean>(false);
   const [isTrustModalOpen, setIsTrustModalOpen] = useState<boolean>(false);
   const [isCapitalFlowModalOpen, setIsCapitalFlowModalOpen] = useState<boolean>(false);
+  const [isAlleyFlowOpen, setIsAlleyFlowOpen] = useState<boolean>(false);
   const [isSubmittingDossier, setIsSubmittingDossier] = useState<boolean>(false);
 
   // Dynamic Application Status Update & Immediate Active Loan Activation
@@ -766,6 +769,45 @@ export function App() {
           </div>
         </div>
       </footer>
+      {/* Floating Alley AI Voice & Process Launcher */}
+      <FloatingAlleyWidget
+        onClick={() => setIsAlleyFlowOpen(true)}
+        language={selectedLanguage}
+        activeEngine={activeAiEngine}
+      />
+
+      {/* Alley Full-Suite FinTech Process Console Webpage / Modal */}
+      <AlleyFlowConsole
+        isOpen={isAlleyFlowOpen}
+        onClose={() => setIsAlleyFlowOpen(false)}
+        activeMerchant={activeMerchant}
+        language={selectedLanguage}
+        onSelectLanguage={(lang) => setSelectedLanguage(lang)}
+        activeEngine={activeAiEngine}
+        onChangeEngine={(engine) => setActiveAiEngine(engine)}
+        onCompleteFlow={async (amount, purpose) => {
+          const newAppId = `VL-2026-${String(applications.length + 1).padStart(3, '0')}`;
+          const newApp: LoanApplication = {
+            applicationId: newAppId,
+            merchantId: activeMerchant.merchantId,
+            merchantName: activeMerchant.name,
+            businessName: activeMerchant.businessName,
+            requestedAmount: amount,
+            approvedAmount: amount,
+            tenureMonths: 6,
+            interestRate: 14.5,
+            monthlyEMI: Math.round(amount / 6 + (amount * 0.145) / 12),
+            purpose: purpose,
+            status: 'Disbursed',
+            appliedAt: new Date().toISOString(),
+            digitalConsentTimestamp: new Date().toISOString(),
+            language: selectedLanguage,
+          };
+          setApplications((prev) => [newApp, ...prev]);
+          await handleUpdateApplicationStatus(newAppId, 'Disbursed');
+          setCurrentView('merchant-loans');
+        }}
+      />
     </div>
   );
 }
