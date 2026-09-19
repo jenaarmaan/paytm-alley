@@ -140,21 +140,41 @@ export class SarvamService {
     }
 
     const systemPrompt = `You are Sarvam Indic LLM, an expert Indic financial underwriting AI for Indian micro-merchants (kiranas, street stalls, artisans).
-Given a merchant's voice transcript in English or Indian languages (Hindi, Hinglish, Kannada, Tamil, Telugu, Malayalam), extract their working capital loan intent.
+Given a merchant's voice transcript in English or Indian languages (Hindi, Hinglish, Kannada, Tamil, Telugu, Malayalam), extract their financial intent.
+
+The merchant may ask for:
+1. Working capital / Business loan (intent: "loan_request")
+2. Sachet Micro-Insurance / Health Insurance / Dukan Suraksha (intent: "insurance_inquiry" or "insurance_enrollment")
 
 You MUST respond strictly in valid JSON format matching this schema:
 {
-  "intent": "loan_request" | "clarification" | "inquiry",
-  "requested_amount": number (integer in INR, e.g. 150000),
+  "intent": "loan_request" | "insurance_inquiry" | "insurance_enrollment" | "clarification" | "inquiry",
+  "requested_amount": number | null (integer in INR, e.g. 150000. For insurance inquiries return null),
   "currency": "INR",
-  "purpose": "working_capital" | "business_expansion" | "inventory_purchase" | "equipment" | "emergency",
+  "purpose": "working_capital" | "business_expansion" | "inventory_purchase" | "equipment" | "emergency" | "health_insurance" | "shop_insurance" | "insurance",
   "use_case": string (concise summary in 5-8 words),
-  "business_context": string (inferred category, e.g., Kirana, Street Food, Textiles),
+  "business_context": string (inferred category, e.g., Kirana, Street Food, Sachet Insurance),
   "language": "${language}",
   "confidence": number (between 0.85 and 0.99),
   "missing_information": string[],
   "clarification_question": string (optional polite question in ${language} if amount is ambiguous)
 }`;
+
+    // Pre-check for insurance queries
+    const lower = transcript.toLowerCase();
+    if (
+      lower.includes('insurance') ||
+      lower.includes('bima') ||
+      lower.includes('suraksha') ||
+      lower.includes('health') ||
+      lower.includes('हेल्थ') ||
+      lower.includes('इंश्योरेंस') ||
+      lower.includes('बीमा') ||
+      lower.includes('स्वास्थ्य') ||
+      lower.includes('hospicash')
+    ) {
+      return this.fallbackParse(transcript, language);
+    }
 
     const userPrompt = `Merchant Spoken Transcript: "${transcript}"\nMerchant Preferred Language: ${language}`;
 
@@ -189,7 +209,7 @@ You MUST respond strictly in valid JSON format matching this schema:
       const parsed = JSON.parse(rawContent);
       return {
         intent: parsed.intent || 'loan_request',
-        requested_amount: Number(parsed.requested_amount) || 150000,
+        requested_amount: parsed.requested_amount !== null && parsed.requested_amount !== undefined ? Number(parsed.requested_amount) : (parsed.intent?.includes('insurance') ? null : 150000),
         currency: 'INR',
         purpose: parsed.purpose || 'working_capital',
         use_case: parsed.use_case || 'Working capital and inventory stocking',
@@ -301,6 +321,50 @@ You MUST respond strictly in valid JSON format matching this schema:
    */
   private fallbackParse(transcript: string, language: SupportedLanguage): LoanIntent {
     const lower = transcript.toLowerCase();
+
+    // Check for insurance intents
+    const isInsurance =
+      lower.includes('insurance') ||
+      lower.includes('bima') ||
+      lower.includes('suraksha') ||
+      lower.includes('health') ||
+      lower.includes('हेल्थ') ||
+      lower.includes('इंश्योरेंस') ||
+      lower.includes('बीमा') ||
+      lower.includes('स्वास्थ्य') ||
+      lower.includes('hospicash') ||
+      lower.includes('hospital') ||
+      lower.includes('medical');
+
+    if (isInsurance) {
+      const isHealth =
+        lower.includes('health') ||
+        lower.includes('हेल्थ') ||
+        lower.includes('स्वास्थ्य') ||
+        lower.includes('hospital') ||
+        lower.includes('hospicash') ||
+        lower.includes('medical') ||
+        lower.includes('doctor') ||
+        lower.includes('bimari');
+
+      return {
+        intent: 'insurance_inquiry',
+        requested_amount: null,
+        currency: 'INR',
+        purpose: isHealth ? 'health_insurance' : 'shop_insurance',
+        use_case: isHealth ? 'Swasthya Raksha Merchant Health & Hospicash Cover' : 'Dukan Suraksha Merchant Property Cover',
+        business_context: 'Embedded Sachet Micro-Insurance Suite',
+        language,
+        confidence: 0.98,
+        missing_information: [],
+        targetInsuranceId: isHealth ? 'swasthya-raksha' : 'dukan-suraksha',
+        dailyPremium: isHealth ? 3 : 5,
+        coverageAmount: isHealth ? 200000 : 300000,
+        raw_transcript: transcript,
+        engine: 'sarvam',
+      };
+    }
+
     let amount = 150000;
     const lakhMatch = lower.match(/(\d+(\.\d+)?)\s*(lakh|lac|lakhs|lakh rupees|lakh ka|latcham)/i);
     const directNumMatch = lower.match(/(?:rs\.?|₹|inr)?\s*(\d{1,3}(?:,\d{3})+|\d{4,7})/i);

@@ -29,10 +29,10 @@ export interface Merchant {
 }
 
 export interface LoanIntent {
-  intent: 'loan_request' | 'clarification' | 'inquiry';
+  intent: 'loan_request' | 'clarification' | 'inquiry' | 'insurance_inquiry' | 'insurance_enrollment' | 'insurance_request';
   requested_amount: number | null;
   currency: string;
-  purpose: 'working_capital' | 'business_expansion' | 'inventory_purchase' | 'equipment' | 'emergency';
+  purpose: 'working_capital' | 'business_expansion' | 'inventory_purchase' | 'equipment' | 'emergency' | 'insurance' | 'health_insurance' | 'shop_insurance';
   use_case: string;
   business_context: string;
   language: SupportedLanguage;
@@ -41,6 +41,9 @@ export interface LoanIntent {
   clarification_question?: string;
   raw_transcript: string;
   engine?: 'gemini' | 'sarvam' | 'deterministic';
+  targetInsuranceId?: string;
+  dailyPremium?: number;
+  coverageAmount?: number;
 }
 
 export interface InsuranceProduct {

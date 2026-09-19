@@ -56,7 +56,94 @@ export function fallbackExtractIntent(
 ): LoanIntent {
   const lower = rawTranscript.toLowerCase();
 
-  // Extract amount
+  // Detect language if possible
+  let detectedLang: SupportedLanguage = preferredLanguage;
+  if (/[\u0C80-\u0CFF]/.test(rawTranscript) || lower.includes('beku') || lower.includes('nanage')) {
+    detectedLang = 'Kannada';
+  } else if (/[\u0900-\u097F]/.test(rawTranscript)) {
+    detectedLang = 'Hindi';
+  } else if (lower.includes('chahiye') || lower.includes('mujhe') || lower.includes('karna hai') || lower.includes('dukaan')) {
+    detectedLang = 'Hinglish';
+  } else if (/[\u0C00-\u0C7F]/.test(rawTranscript) || lower.includes('kavali')) {
+    detectedLang = 'Telugu';
+  } else if (/[\u0B80-\u0BFF]/.test(rawTranscript) || lower.includes('vendum')) {
+    detectedLang = 'Tamil';
+  } else if (/[\u0D00-\u0D7F]/.test(rawTranscript) || lower.includes('venam')) {
+    detectedLang = 'Malayalam';
+  }
+
+  // 1. Check for Insurance Intent (Health Insurance, Dukan Suraksha, Sachet Micro-Insurance)
+  const isInsurance =
+    lower.includes('insurance') ||
+    lower.includes('bima') ||
+    lower.includes('beema') ||
+    lower.includes('suraksha') ||
+    lower.includes('hospicash') ||
+    lower.includes('health') ||
+    lower.includes('swasthya') ||
+    lower.includes('हेल्थ') ||
+    lower.includes('इंश्योरेंस') ||
+    lower.includes('बीमा') ||
+    lower.includes('स्वास्थ्य') ||
+    lower.includes('सुरक्षा') ||
+    lower.includes('दुकान सुरक्षा') ||
+    lower.includes('claim') ||
+    lower.includes('क्लेम');
+
+  if (isInsurance) {
+    const isHealth =
+      lower.includes('health') ||
+      lower.includes('हेल्थ') ||
+      lower.includes('swasthya') ||
+      lower.includes('स्वास्थ्य') ||
+      lower.includes('hospicash') ||
+      lower.includes('hospital') ||
+      lower.includes('aspataal');
+
+    const isShop =
+      lower.includes('dukan') ||
+      lower.includes('दुकान') ||
+      lower.includes('shop') ||
+      lower.includes('fire') ||
+      lower.includes('theft') ||
+      lower.includes('aag') ||
+      lower.includes('chori');
+
+    const purpose: LoanIntent['purpose'] = isHealth
+      ? 'health_insurance'
+      : isShop
+      ? 'shop_insurance'
+      : 'insurance';
+
+    const useCase = isHealth
+      ? 'Swasthya Raksha Merchant Health & Hospicash Cover'
+      : isShop
+      ? 'Dukan Suraksha Shop Fire & Theft Insurance'
+      : 'Sachet Micro-Insurance Suite';
+
+    const businessContext = 'Embedded Sachet Micro-Insurance';
+    const targetInsuranceId = isHealth ? 'hospicash' : isShop ? 'dukan-suraksha' : 'credit-shield';
+    const coverage = isHealth ? 200000 : 300000;
+
+    return {
+      intent: 'insurance_inquiry',
+      requested_amount: null,
+      currency: 'INR',
+      purpose,
+      use_case: useCase,
+      business_context: businessContext,
+      language: detectedLang,
+      confidence: 0.98,
+      missing_information: [],
+      raw_transcript: rawTranscript,
+      engine: 'deterministic',
+      targetInsuranceId,
+      dailyPremium: 3,
+      coverageAmount: coverage,
+    };
+  }
+
+  // 2. Extract Loan Request Amount
   let amount: number | null = null;
   const lakhMatch = lower.match(/(\d+(\.\d+)?)\s*(lakh|lac|lakhs|lakh rupees|lakh ka|latcham)/i);
   const directNumMatch = lower.match(/(?:rs\.?|₹|inr)?\s*(\d{1,3}(?:,\d{3})+|\d{3,7})/i);
@@ -86,7 +173,7 @@ export function fallbackExtractIntent(
     amount = 150000;
   }
 
-  // Detect purpose / use case
+  // Detect purpose / use case for loan
   let purpose: LoanIntent['purpose'] = 'working_capital';
   let useCase = 'Working Capital for operations';
   let businessContext = 'Operational cashflow replenishment';
@@ -103,22 +190,6 @@ export function fallbackExtractIntent(
     purpose = 'emergency';
     useCase = 'Short-term Liquidity Buffer';
     businessContext = 'Immediate supplier invoice settlement';
-  }
-
-  // Detect language if possible
-  let detectedLang: SupportedLanguage = preferredLanguage;
-  if (/[\u0C80-\u0CFF]/.test(rawTranscript) || lower.includes('beku') || lower.includes('nanage')) {
-    detectedLang = 'Kannada';
-  } else if (/[\u0900-\u097F]/.test(rawTranscript)) {
-    detectedLang = 'Hindi';
-  } else if (lower.includes('chahiye') || lower.includes('mujhe') || lower.includes('karna hai') || lower.includes('dukaan')) {
-    detectedLang = 'Hinglish';
-  } else if (/[\u0C00-\u0C7F]/.test(rawTranscript) || lower.includes('kavali')) {
-    detectedLang = 'Telugu';
-  } else if (/[\u0B80-\u0BFF]/.test(rawTranscript) || lower.includes('vendum')) {
-    detectedLang = 'Tamil';
-  } else if (/[\u0D00-\u0D7F]/.test(rawTranscript) || lower.includes('venam')) {
-    detectedLang = 'Malayalam';
   }
 
   const missingInfo: string[] = [];
@@ -151,6 +222,21 @@ export async function extractLoanIntent(
     return fallbackExtractIntent(rawTranscript, preferredLanguage);
   }
 
+  // Pre-check for insurance query to avoid wrong generative loan defaulting
+  const lower = rawTranscript.toLowerCase();
+  if (
+    lower.includes('insurance') ||
+    lower.includes('bima') ||
+    lower.includes('suraksha') ||
+    lower.includes('health') ||
+    lower.includes('हेल्थ') ||
+    lower.includes('इंश्योरेंस') ||
+    lower.includes('बीमा') ||
+    lower.includes('स्वास्थ्य')
+  ) {
+    return fallbackExtractIntent(rawTranscript, preferredLanguage);
+  }
+
   const systemInstruction = `
 You are VoiceLend's financial intent extraction engine.
 Your task is ONLY to understand the merchant's natural-language request (in English, Hindi, Kannada, Telugu, Tamil, Malayalam, or Hinglish) and return structured JSON.
@@ -158,12 +244,17 @@ Do not make loan decisions.
 Do not calculate financial eligibility.
 Do not invent missing information.
 
+Understand whether the request is for:
+1. Loan / Working Capital (intent: "loan_request")
+2. Sachet Micro-Insurance / Health Insurance / Dukan Suraksha (intent: "insurance_inquiry")
+
 Extract:
-- requested_amount (in numbers as integer INR, e.g. 200000 for 2 lakh, 150000 for 1.5 lakh. If unknown, return null)
+- intent ("loan_request" | "insurance_inquiry" | "clarification" | "inquiry")
+- requested_amount (in numbers as integer INR, e.g. 200000 for 2 lakh, 150000 for 1.5 lakh. If insurance or not specified, return null)
 - currency ("INR")
-- purpose ("working_capital" | "business_expansion" | "inventory_purchase" | "equipment" | "emergency")
-- use_case (short string, e.g. "Inventory purchase")
-- business_context (e.g. "Festive inventory" or "Working capital buffer")
+- purpose ("working_capital" | "business_expansion" | "inventory_purchase" | "equipment" | "emergency" | "health_insurance" | "shop_insurance" | "insurance")
+- use_case (short string, e.g. "Inventory purchase" or "Merchant Health Cover")
+- business_context (e.g. "Festive inventory" or "Embedded Sachet Insurance")
 - language ("English" | "Hindi" | "Kannada" | "Telugu" | "Tamil" | "Malayalam" | "Hinglish")
 - confidence (number between 0.85 and 0.99)
 - missing_information (array of missing field names, e.g. ["requested_amount"] if not specified)
@@ -180,12 +271,12 @@ Extract:
         responseSchema: {
           type: Type.OBJECT,
           properties: {
-            intent: { type: Type.STRING, enum: ['loan_request', 'clarification', 'inquiry'] },
+            intent: { type: Type.STRING, enum: ['loan_request', 'insurance_inquiry', 'clarification', 'inquiry'] },
             requested_amount: { type: Type.INTEGER },
             currency: { type: Type.STRING },
             purpose: {
               type: Type.STRING,
-              enum: ['working_capital', 'business_expansion', 'inventory_purchase', 'equipment', 'emergency'],
+              enum: ['working_capital', 'business_expansion', 'inventory_purchase', 'equipment', 'emergency', 'health_insurance', 'shop_insurance', 'insurance'],
             },
             use_case: { type: Type.STRING },
             business_context: { type: Type.STRING },
@@ -211,17 +302,18 @@ Extract:
     const parsed = JSON.parse(response.text?.trim() || '{}');
     return {
       intent: parsed.intent || 'loan_request',
-      requested_amount: parsed.requested_amount || (rawTranscript.includes('2 lakh') ? 200000 : 150000),
+      requested_amount: parsed.requested_amount || (rawTranscript.includes('2 lakh') ? 200000 : rawTranscript.includes('insurance') ? null : 150000),
       currency: parsed.currency || 'INR',
-      purpose: parsed.purpose || 'inventory_purchase',
-      use_case: parsed.use_case || 'Inventory stock',
-      business_context: parsed.business_context || 'Festive inventory stock',
+      purpose: parsed.purpose || 'working_capital',
+      use_case: parsed.use_case || (parsed.purpose === 'health_insurance' ? 'Merchant Health Insurance' : 'Working Capital stock'),
+      business_context: parsed.business_context || 'Operational merchant context',
       language: parsed.language || preferredLanguage,
       confidence: parsed.confidence || 0.96,
       missing_information: parsed.missing_information || [],
       clarification_question: parsed.clarification_question,
       raw_transcript: rawTranscript,
       engine: 'gemini',
+      targetInsuranceId: parsed.purpose === 'health_insurance' ? 'hospicash' : parsed.purpose === 'shop_insurance' ? 'dukan-suraksha' : undefined,
     };
   } catch (err: any) {
     // Seamless graceful fallback: log operational info without dumping raw 503 stack trace into stderr

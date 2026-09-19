@@ -452,6 +452,33 @@ export function getVoiceIntentAcknowledgement(
   purpose: string,
   language: SupportedLanguage
 ): string {
+  const isInsurance =
+    purpose.toLowerCase().includes('insurance') ||
+    purpose.toLowerCase().includes('health') ||
+    purpose.toLowerCase().includes('bima') ||
+    purpose.toLowerCase().includes('suraksha') ||
+    purpose.toLowerCase().includes('hospicash');
+
+  if (isInsurance) {
+    switch (language) {
+      case 'Hinglish':
+        return `Samajh gaya! Aapne Swasthya Raksha Health Insurance aur Hospicash bima ke baare me pucha hai. Rozana sirf ₹3 se ₹2,00,000 ka hospital cash cover uplabdh hai. Chaliye plans dekhein!`;
+      case 'Hindi':
+        return `समझ गया! आपने स्वास्थ्य सुरक्षा एवं अस्पताल कैश बीमा के बारे में पूछा है। प्रतिदिन मात्र ₹3 में ₹2,00,000 का सुरक्षा कवच उपलब्ध है।`;
+      case 'Kannada':
+        return `ಅರ್ಥವಾಯಿತು! ನೀವು ಆರೋಗ್ಯ ವಿಮೆ ಮತ್ತು ಆಸ್ಪತ್ರೆ ಕವರ್ ಬಗ್ಗೆ ಕೇಳಿದ್ದೀರಿ. ದಿನಕ್ಕೆ ಕೇವಲ ₹3 ರಲ್ಲಿ ₹2,00,000 ವರೆಗೆ ವಿಮಾ ರಕ್ಷಣೆ ಲभ್ಯವಿದೆ.`;
+      case 'Telugu':
+        return `అర్థమైంది! మీరు ఆరోగ్య బీమా మరియు హాస్పిటల్ క్యాష్ కవర్ గురించి అడిగారు. రోజుకు కేవలం ₹3తో ₹2,00,000 కవరేజ్ అందుబాటులో ఉంది.`;
+      case 'Tamil':
+        return `புரிந்தது! நீங்கள் மருத்துவ காப்பீடு மற்றும் மருத்துவமனை கவரேஜ் பற்றி கேட்டுள்ளீர்கள். நாள் ஒன்றுக்கு ₹3ல் ₹2,00,000 வரை பாதுகாப்பு கிடைக்கும்.`;
+      case 'Malayalam':
+        return `മനസ്സിലായി! നിങ്ങൾ ആരോഗ്യ ഇൻഷുറൻസ് സംബന്ധിച്ച് വിവരങ്ങൾ ചോദിച്ചിരിക്കുന്നു. ദിവസേന ₹3 രൂപയ്ക്ക് ₹2,00,000 വരെ കവറേജ് ലഭ്യമാണ്.`;
+      case 'English':
+      default:
+        return `Understood! You enquired about Swasthya Raksha Health & Hospicash Insurance. Sachet coverage up to ₹2,00,000 is available for just ₹3/day auto-split.`;
+    }
+  }
+
   const formattedAmount = `₹${amount.toLocaleString('en-IN')}`;
   switch (language) {
     case 'Hinglish':
@@ -461,7 +488,7 @@ export function getVoiceIntentAcknowledgement(
     case 'Kannada':
       return `ಅರ್ಥವಾಯಿತು! ನೀವು ${purpose || 'ವ್ಯಾಪಾರ'}ಕ್ಕಾಗಿ ${formattedAmount} ದುಡಿಯುವ ಬಂಡವಾಳ ಸಾಲವನ್ನು ಕೇಳಿದ್ದೀರಿ. ನಿಮ್ಮ ಅಂಗಡಿಯ ಅರ್ಹತೆಯನ್ನು ಪರಿಶೀಲಿಸಲಾಗುತ್ತಿದೆ.`;
     case 'Telugu':
-      return `అర్థమైంది! మీరు ${purpose || 'వ్యాపారం'} కోసం ${formattedAmount} వర్కింగ్ క్యాపిటల్ రుణం కోరారు. మీ అర్హతను లెక్కిస్తున్నాము.`;
+      return `అర్థమైంది! మీరు ${purpose || 'వ్యాపారం'} కోసం ${formattedAmount} వర్కిᱝ క్యాపిటల్ రుణం కోరారు. మీ అర్హతను లెక్కిస్తున్నాము.`;
     case 'Tamil':
       return `புரிந்தது! நீங்கள் ${purpose || 'வணிகத்திற்காக'} ${formattedAmount} நடைமுறை மூலதன கடன் கோரியுள்ளீர்கள். தகுதியை மதிப்பீடு செய்கிறோம்.`;
     case 'Malayalam':
