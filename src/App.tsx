@@ -488,8 +488,8 @@ export function App() {
         {currentView === 'merchant-voice' && (
           <div className="max-w-4xl mx-auto space-y-6">
             {/* Real-time 6-Stage Journey Breadcrumb */}
-            <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xs p-3.5">
-              <div className="flex items-center justify-between gap-2 overflow-x-auto pb-1 text-xs">
+            <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xs p-3">
+              <div className="flex items-center justify-between gap-2 overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden py-0.5 text-xs">
                 {[
                   { step: 'INPUT', label: '1. Voice Request' },
                   { step: 'INTENT_CONFIRMATION', label: '2. Intent Slotting' },

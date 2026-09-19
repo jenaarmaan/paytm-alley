@@ -43,16 +43,16 @@ export const IntentCard: React.FC<IntentCardProps> = ({
   };
 
   return (
-    <div id="intent-card" className="bg-white rounded-2xl border border-slate-200/90 shadow-sm p-6 sm:p-8 animate-in fade-in-50 duration-300">
+    <div id="intent-card" className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-xl p-6 sm:p-8 animate-in fade-in-50 duration-300">
       {/* Card Header */}
-      <div className="flex items-center justify-between border-b border-slate-100 pb-4 mb-6">
+      <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4 mb-6">
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center">
-            <Sparkles className="w-4 h-4" />
+          <div className="w-9 h-9 rounded-xl bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center border border-emerald-500/20">
+            <Sparkles className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="text-lg font-bold text-slate-900">{t.hereIsWhatIUnderstood}</h3>
-            <p className="text-xs text-slate-500">
+            <h3 className="text-lg font-bold text-slate-900 dark:text-white">{t.hereIsWhatIUnderstood}</h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
               {intent.engine === 'deterministic'
                 ? 'Extracted via High-Reliability Indic Language Core (Deterministic Engine)'
                 : 'Extracted from voice via Gemini Indic Natural Language Core'}
@@ -62,11 +62,11 @@ export const IntentCard: React.FC<IntentCardProps> = ({
 
         <div className="flex items-center gap-2">
           {intent.engine === 'deterministic' && (
-            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-200">
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
               <span>High-Reliability Fallback</span>
             </span>
           )}
-          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
             <ShieldCheck className="w-3.5 h-3.5" />
             <span>{Math.round(intent.confidence * 100)}% Confidence</span>
           </span>
@@ -75,9 +75,9 @@ export const IntentCard: React.FC<IntentCardProps> = ({
 
       {/* Raw spoken quote */}
       {intent.raw_transcript && (
-        <div className="p-3 mb-6 rounded-xl bg-slate-50 border border-slate-200/70 text-slate-600 text-xs italic flex items-center gap-2">
+        <div className="p-3 mb-6 rounded-xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200/70 dark:border-slate-800 text-slate-600 dark:text-slate-400 text-xs italic flex items-center gap-2">
           <span className="font-semibold text-slate-500 uppercase not-italic tracking-wider text-[10px]">Spoken:</span>
-          <span className="text-slate-900 font-medium">"{intent.raw_transcript}"</span>
+          <span className="text-slate-900 dark:text-white font-medium">"{intent.raw_transcript}"</span>
         </div>
       )}
 
@@ -85,43 +85,43 @@ export const IntentCard: React.FC<IntentCardProps> = ({
       {!isEditing ? (
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
           {/* Requested Amount */}
-          <div className="p-4 rounded-xl bg-slate-50 border border-slate-100">
-            <div className="text-xs text-slate-500 mb-1 flex items-center gap-1.5 font-medium">
-              <TrendingUp className="w-3.5 h-3.5 text-emerald-600" />
+          <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200/80 dark:border-slate-800">
+            <div className="text-xs text-slate-500 dark:text-slate-400 mb-1 flex items-center gap-1.5 font-medium">
+              <TrendingUp className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
               <span>{t.loanAmount}</span>
             </div>
-            <div className="text-2xl font-black text-slate-900">
+            <div className="text-2xl font-black text-slate-900 dark:text-white font-mono">
               ₹{(intent.requested_amount ?? 150000).toLocaleString('en-IN')}
             </div>
-            <div className="text-[11px] text-slate-500 mt-1">
+            <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
               INR ({intent.currency})
             </div>
           </div>
 
           {/* Purpose */}
-          <div className="p-4 rounded-xl bg-slate-50 border border-slate-100">
-            <div className="text-xs text-slate-500 mb-1 flex items-center gap-1.5 font-medium">
-              <Tag className="w-3.5 h-3.5 text-sky-600" />
+          <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200/80 dark:border-slate-800">
+            <div className="text-xs text-slate-500 dark:text-slate-400 mb-1 flex items-center gap-1.5 font-medium">
+              <Tag className="w-3.5 h-3.5 text-sky-600 dark:text-sky-400" />
               <span>{t.purpose}</span>
             </div>
-            <div className="text-lg font-bold text-slate-900 capitalize">
+            <div className="text-lg font-bold text-slate-900 dark:text-white capitalize">
               {intent.purpose.replace(/_/g, ' ')}
             </div>
-            <div className="text-[11px] text-slate-500 mt-1">
+            <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
               {intent.use_case}
             </div>
           </div>
 
           {/* Business Context & Language */}
-          <div className="p-4 rounded-xl bg-slate-50 border border-slate-100">
-            <div className="text-xs text-slate-500 mb-1 flex items-center gap-1.5 font-medium">
-              <Clock className="w-3.5 h-3.5 text-amber-600" />
-              <span>Context & Language</span>
+          <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200/80 dark:border-slate-800">
+            <div className="text-xs text-slate-500 dark:text-slate-400 mb-1 flex items-center gap-1.5 font-medium">
+              <Clock className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+              <span>Context &amp; Language</span>
             </div>
-            <div className="text-sm font-bold text-slate-900">
+            <div className="text-sm font-bold text-slate-900 dark:text-white">
               {intent.business_context}
             </div>
-            <div className="text-[11px] text-emerald-700 font-medium mt-1">
+            <div className="text-[11px] text-emerald-700 dark:text-emerald-400 font-medium mt-1">
               Spoken in {intent.language}
             </div>
           </div>

@@ -30,21 +30,21 @@ export const MerchantContextCard: React.FC<MerchantContextCardProps> = ({
   const debtRatio = ((merchant.existingEMI / merchant.monthlyCashflow) * 100).toFixed(1);
 
   return (
-    <div id="merchant-context-card" className="bg-white rounded-2xl border border-slate-200/90 shadow-sm p-6 sm:p-8">
+    <div id="merchant-context-card" className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-xl p-6 sm:p-8">
       {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-4 mb-6">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-800 pb-4 mb-6">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-slate-900 text-white flex items-center justify-center font-bold text-lg">
+          <div className="w-10 h-10 rounded-xl bg-slate-900 dark:bg-slate-800 text-white flex items-center justify-center font-bold text-lg shadow-xs">
             {merchant.name.charAt(0)}
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h3 className="text-lg font-bold text-slate-900">{merchant.businessName}</h3>
-              <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white">{merchant.businessName}</h3>
+              <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
                 Verified Merchant
               </span>
             </div>
-            <p className="text-xs text-slate-500 flex items-center gap-1.5 mt-0.5">
+            <p className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1.5 mt-0.5">
               <MapPin className="w-3 h-3 text-slate-400" />
               <span>{merchant.location}</span>
               <span>•</span>
@@ -58,9 +58,9 @@ export const MerchantContextCard: React.FC<MerchantContextCardProps> = ({
           type="button"
           id="btn-toggle-context-graph"
           onClick={() => setShowGraphView(!showGraphView)}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
         >
-          <Network className="w-3.5 h-3.5 text-emerald-600" />
+          <Network className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
           <span>{showGraphView ? 'Show Metrics Table' : 'View Context Graph'}</span>
         </button>
       </div>
@@ -69,43 +69,43 @@ export const MerchantContextCard: React.FC<MerchantContextCardProps> = ({
       {!showGraphView ? (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           {/* Monthly Sales */}
-          <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-100">
-            <div className="text-[11px] font-medium text-slate-500 flex items-center gap-1">
-              <TrendingUp className="w-3.5 h-3.5 text-emerald-600" />
+          <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200/80 dark:border-slate-800">
+            <div className="text-[11px] font-medium text-slate-500 dark:text-slate-400 flex items-center gap-1">
+              <TrendingUp className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
               <span>{t.monthlySales}</span>
             </div>
-            <div className="text-xl font-bold text-slate-900 mt-1">
+            <div className="text-xl font-bold text-slate-900 dark:text-white mt-1">
               ₹{merchant.monthlySales.toLocaleString('en-IN')}
             </div>
-            <div className="text-[10px] text-emerald-700 font-medium mt-0.5">
+            <div className="text-[10px] text-emerald-700 dark:text-emerald-400 font-medium mt-0.5">
               Based on UPI settlements
             </div>
           </div>
 
           {/* Monthly Cashflow */}
-          <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-100">
-            <div className="text-[11px] font-medium text-slate-500 flex items-center gap-1">
-              <IndianRupee className="w-3.5 h-3.5 text-sky-600" />
+          <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200/80 dark:border-slate-800">
+            <div className="text-[11px] font-medium text-slate-500 dark:text-slate-400 flex items-center gap-1">
+              <IndianRupee className="w-3.5 h-3.5 text-sky-600 dark:text-sky-400" />
               <span>{t.monthlyCashflow}</span>
             </div>
-            <div className="text-xl font-bold text-slate-900 mt-1">
+            <div className="text-xl font-bold text-slate-900 dark:text-white mt-1">
               ₹{merchant.monthlyCashflow.toLocaleString('en-IN')}
             </div>
-            <div className="text-[10px] text-slate-500 mt-0.5">
+            <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
               Net operating surplus
             </div>
           </div>
 
           {/* Existing EMI */}
-          <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-100">
-            <div className="text-[11px] font-medium text-slate-500 flex items-center gap-1">
-              <CreditCard className="w-3.5 h-3.5 text-amber-600" />
+          <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200/80 dark:border-slate-800">
+            <div className="text-[11px] font-medium text-slate-500 dark:text-slate-400 flex items-center gap-1">
+              <CreditCard className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
               <span>{t.currentEMI}</span>
             </div>
-            <div className="text-xl font-bold text-slate-900 mt-1">
+            <div className="text-xl font-bold text-slate-900 dark:text-white mt-1">
               ₹{merchant.existingEMI.toLocaleString('en-IN')}
             </div>
-            <div className="text-[10px] text-slate-500 mt-0.5">
+            <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
               {debtRatio}% of monthly cashflow
             </div>
           </div>
