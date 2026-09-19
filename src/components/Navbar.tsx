@@ -272,41 +272,22 @@ export const Navbar: React.FC<NavbarProps> = ({
             </button>
           )}
 
-          {/* Login or + Onboard Button */}
+          {/* Login or Log Out Button */}
           {isAuthenticated ? (
-            <div className="flex items-center gap-1.5">
-              <button
-                id="btn-navbar-onboard-merchant"
-                onClick={() => {
-                  if (onOpenAuth) {
-                    onOpenAuth('register');
-                  } else if (onOpenOnboarding) {
-                    onOpenOnboarding();
-                  } else {
-                    onNavigate('merchant-onboarding');
-                  }
-                }}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-extrabold shadow-sm shadow-emerald-600/20 transition-all hover:scale-105 active:scale-95 cursor-pointer"
-                title="Onboard a new merchant profile in 60 seconds"
-              >
-                <UserPlus className="w-3.5 h-3.5" />
-                <span className="hidden md:inline">+ Onboard New</span>
-                <span className="md:hidden">+ Onboard</span>
-              </button>
-
-              <button
-                onClick={onLogout}
-                className="hidden sm:flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-bold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50 transition-all cursor-pointer"
-                title="Log Out Session"
-              >
-                <LogOut className="w-3.5 h-3.5" />
-                <span className="hidden md:inline">Log Out</span>
-              </button>
-            </div>
+            <button
+              id="btn-navbar-logout"
+              onClick={onLogout}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-rose-600 dark:text-rose-400 bg-rose-50/80 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-900/50 border border-rose-200 dark:border-rose-800 transition-all cursor-pointer shadow-xs"
+              title="Log Out Session"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+              <span>Log Out</span>
+            </button>
           ) : (
             <button
+              id="btn-navbar-login"
               onClick={() => onOpenAuth?.('login')}
-              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 text-white text-xs font-extrabold shadow-sm shadow-emerald-600/20 cursor-pointer"
+              className="flex items-center gap-1.5 px-4 py-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-extrabold shadow-sm shadow-emerald-600/20 transition-all hover:scale-105 active:scale-95 cursor-pointer"
             >
               <LogIn className="w-3.5 h-3.5" />
               <span>Log In</span>

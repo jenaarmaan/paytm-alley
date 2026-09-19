@@ -14,7 +14,10 @@ import {
   ArrowRight,
   RefreshCw,
   BadgeCheck,
-  Smartphone
+  Smartphone,
+  Users,
+  Shield,
+  Briefcase
 } from 'lucide-react';
 import { Merchant, SupportedLanguage } from '../types';
 import { authService } from '../services/authService';
@@ -34,7 +37,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   onAuthSuccess,
   merchants,
 }) => {
-  const [mode, setMode] = useState<'login' | 'register' | 'otp'>(initialMode);
+  const [activeTab, setActiveTab] = useState<'signin' | 'demolist' | 'signup'>(
+    initialMode === 'register' ? 'signup' : 'signin'
+  );
   const [mobileNumber, setMobileNumber] = useState('');
   const [otp, setOtp] = useState('');
   const [isOtpSent, setIsOtpSent] = useState(false);
@@ -52,7 +57,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
   if (!isOpen) return null;
 
-  // 1-Click Quick Login
+  // 1-Click Quick Login by Merchant ID
   const handleQuickLogin = (merchantId: string) => {
     setIsLoading(true);
     setTimeout(() => {
@@ -60,7 +65,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       setIsLoading(false);
       onAuthSuccess(loggedInMerchant);
       onClose();
-    }, 300);
+    }, 250);
   };
 
   // Mobile + OTP Login
@@ -70,9 +75,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     setIsLoading(true);
     setTimeout(() => {
       setIsOtpSent(true);
-      setOtp('420108'); // Auto-populate for seamless demo
+      setOtp('420108'); // Auto-populate for quick testing
       setIsLoading(false);
-    }, 400);
+    }, 350);
   };
 
   const handleVerifyOtp = (e: React.FormEvent) => {
@@ -84,7 +89,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       setIsLoading(false);
       onAuthSuccess(merchant);
       onClose();
-    }, 400);
+    }, 350);
   };
 
   // Registration / Onboarding
@@ -107,15 +112,17 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       setIsLoading(false);
       onAuthSuccess(newMerchant);
       onClose();
-    }, 500);
+    }, 450);
   };
+
+  const merchantList = Object.values(merchants);
 
   return (
     <div
       id="auth-modal-backdrop"
       className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 overflow-y-auto animate-in fade-in duration-200"
     >
-      <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xl flex flex-col w-full max-w-4xl max-h-[92vh] overflow-hidden">
+      <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xl flex flex-col w-full max-w-4xl max-h-[90vh] overflow-hidden">
         
         {/* Modal Header */}
         <div className="px-6 py-4 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white flex items-center justify-between border-b border-slate-800">
@@ -126,14 +133,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             <div>
               <div className="flex items-center gap-2">
                 <h2 className="font-extrabold text-base sm:text-lg tracking-tight">
-                  Merchant Authentication Portal
+                  Merchant Authentication &amp; Sign In
                 </h2>
                 <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
                   NPCI &amp; RBI Compliant
                 </span>
               </div>
               <p className="text-xs text-slate-400">
-                Log in to your merchant account or register a new business profile with live credit underwriting
+                Sign in with your mobile OTP or select a pre-configured demo role from the list
               </p>
             </div>
           </div>
@@ -150,135 +157,58 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         {/* Tab Switcher */}
         <div className="px-6 bg-slate-950/90 text-white flex items-center gap-2 border-b border-slate-800 overflow-x-auto">
           <button
-            onClick={() => setMode('login')}
-            className={`flex items-center gap-2 py-3 px-3 text-xs font-bold border-b-2 transition-all whitespace-nowrap cursor-pointer ${
-              mode === 'login'
-                ? 'border-emerald-400 text-emerald-400 bg-slate-900/60'
-                : 'border-transparent text-slate-400 hover:text-slate-200'
-            }`}
-          >
-            <LogIn className="w-4 h-4" />
-            <span>Quick Merchant Logins</span>
-          </button>
-
-          <button
-            onClick={() => setMode('otp')}
-            className={`flex items-center gap-2 py-3 px-3 text-xs font-bold border-b-2 transition-all whitespace-nowrap cursor-pointer ${
-              mode === 'otp'
+            onClick={() => setActiveTab('signin')}
+            className={`flex items-center gap-2 py-3 px-3.5 text-xs font-bold border-b-2 transition-all whitespace-nowrap cursor-pointer ${
+              activeTab === 'signin'
                 ? 'border-emerald-400 text-emerald-400 bg-slate-900/60'
                 : 'border-transparent text-slate-400 hover:text-slate-200'
             }`}
           >
             <Smartphone className="w-4 h-4" />
-            <span>Mobile + OTP Login</span>
+            <span>Sign In (Mobile + OTP)</span>
           </button>
 
           <button
-            onClick={() => setMode('register')}
-            className={`flex items-center gap-2 py-3 px-3 text-xs font-bold border-b-2 transition-all whitespace-nowrap cursor-pointer ${
-              mode === 'register'
+            onClick={() => setActiveTab('demolist')}
+            className={`flex items-center gap-2 py-3 px-3.5 text-xs font-bold border-b-2 transition-all whitespace-nowrap cursor-pointer ${
+              activeTab === 'demolist'
+                ? 'border-emerald-400 text-emerald-400 bg-slate-900/60'
+                : 'border-transparent text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <Users className="w-4 h-4" />
+            <span>Demo Role Logins (List View)</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('signup')}
+            className={`flex items-center gap-2 py-3 px-3.5 text-xs font-bold border-b-2 transition-all whitespace-nowrap cursor-pointer ${
+              activeTab === 'signup'
                 ? 'border-emerald-400 text-emerald-400 bg-slate-900/60'
                 : 'border-transparent text-slate-400 hover:text-slate-200'
             }`}
           >
             <UserPlus className="w-4 h-4" />
-            <span>+ Onboard / Register New Merchant</span>
+            <span>Sign Up / Register New</span>
           </button>
         </div>
 
-        {/* Content Area */}
+        {/* Modal Content Area */}
         <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-slate-50 dark:bg-slate-950/40">
           
-          {/* TAB 1: QUICK 1-CLICK MERCHANT LOGIN */}
-          {mode === 'login' && (
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-sm font-extrabold text-slate-900 dark:text-white">
-                    Select a Registered Merchant Profile to Log In
-                  </h3>
-                  <p className="text-xs text-slate-500 mt-0.5">
-                    1-Click authentication with persistent local session storage.
-                  </p>
-                </div>
-                <button
-                  onClick={() => setMode('register')}
-                  className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 text-white text-xs font-bold shadow-xs cursor-pointer"
-                >
-                  + New Merchant
-                </button>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
-                {Object.values(merchants).map((m) => (
-                  <div
-                    key={m.merchantId}
-                    className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-emerald-400 hover:shadow-md transition-all flex flex-col justify-between"
-                  >
-                    <div>
-                      <div className="flex items-start justify-between gap-2 mb-2.5">
-                        <div className="flex items-center gap-2.5">
-                          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-slate-900 via-indigo-950 to-slate-800 text-white flex items-center justify-center font-bold text-xs shadow-xs">
-                            {m.name.split(' ').map((n) => n[0]).join('').slice(0, 2)}
-                          </div>
-                          <div>
-                            <div className="font-bold text-xs text-slate-900 dark:text-white flex items-center gap-1">
-                              <span>{m.name}</span>
-                              <BadgeCheck className="w-3.5 h-3.5 text-sky-500" />
-                            </div>
-                            <span className="text-[11px] text-slate-500 font-medium block">
-                              {m.businessName}
-                            </span>
-                          </div>
-                        </div>
-                        <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
-                          {m.merchantId}
-                        </span>
-                      </div>
-
-                      <div className="space-y-1 text-xs text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-950/60 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800/80 mb-3">
-                        <div className="flex items-center justify-between">
-                          <span className="text-slate-400 text-[11px]">Turnover:</span>
-                          <span className="font-extrabold text-emerald-600 dark:text-emerald-400 font-mono">
-                            ₹{(m.monthlySales || 150000).toLocaleString('en-IN')}/mo
-                          </span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-slate-400 text-[11px]">Location:</span>
-                          <span className="font-medium text-slate-700 dark:text-slate-300 truncate max-w-[150px]">
-                            {m.location}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <button
-                      onClick={() => handleQuickLogin(m.merchantId)}
-                      disabled={isLoading}
-                      className="w-full py-2 px-3 rounded-xl bg-slate-900 dark:bg-slate-800 hover:bg-emerald-600 dark:hover:bg-emerald-600 text-white text-xs font-bold transition-all flex items-center justify-center gap-1.5 shadow-xs cursor-pointer"
-                    >
-                      <LogIn className="w-3.5 h-3.5" />
-                      <span>Log In as {m.name.split(' ')[0]}</span>
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* TAB 2: MOBILE + OTP LOGIN */}
-          {mode === 'otp' && (
-            <div className="max-w-md mx-auto py-4">
+          {/* TAB 1: SIGN IN (MOBILE + OTP & QUICK DEMO ROLE ACCELERATOR) */}
+          {activeTab === 'signin' && (
+            <div className="max-w-md mx-auto py-2 space-y-4">
               <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
                 <div className="text-center">
                   <div className="w-12 h-12 rounded-2xl bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 flex items-center justify-center mx-auto mb-2">
                     <Phone className="w-6 h-6" />
                   </div>
                   <h3 className="text-base font-extrabold text-slate-900 dark:text-white">
-                    Merchant Mobile Login
+                    Merchant Mobile Sign In
                   </h3>
                   <p className="text-xs text-slate-500 mt-1">
-                    Enter your registered 10-digit Bharat mobile number to receive instant OTP authentication.
+                    Enter your registered 10-digit mobile number for instant OTP verification.
                   </p>
                 </div>
 
@@ -326,7 +256,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       <button
                         type="button"
                         onClick={() => setIsOtpSent(false)}
-                        className="font-bold underline text-[11px]"
+                        className="font-bold underline text-[11px] cursor-pointer"
                       >
                         Change
                       </button>
@@ -366,12 +296,107 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     </button>
                   </form>
                 )}
+
+                {/* Quick Switch to Demo Role List */}
+                <div className="pt-3 border-t border-slate-100 dark:border-slate-800 text-center">
+                  <button
+                    onClick={() => setActiveTab('demolist')}
+                    className="text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:underline inline-flex items-center gap-1 cursor-pointer"
+                  >
+                    <span>Or 1-Click Login with Demo Roles (List View)</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
               </div>
             </div>
           )}
 
-          {/* TAB 3: REGISTER / ONBOARD NEW MERCHANT */}
-          {mode === 'register' && (
+          {/* TAB 2: DEMO / ROLE LOGINS IN A CLEAN LIST FORMAT (NOT CARDS) */}
+          {activeTab === 'demolist' && (
+            <div className="space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800">
+                <div>
+                  <h3 className="text-sm font-extrabold text-slate-900 dark:text-white">
+                    Select Demo Role / Merchant Profile to Sign In
+                  </h3>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Structured list format for instantaneous 1-click role authentication.
+                  </p>
+                </div>
+                <span className="text-xs font-mono font-bold text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-lg self-start sm:self-auto">
+                  {merchantList.length} Roles Available
+                </span>
+              </div>
+
+              {/* LIST VIEW (Table-Like High-Density List) */}
+              <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden divide-y divide-slate-100 dark:divide-slate-800 shadow-xs">
+                {merchantList.map((m) => (
+                  <div
+                    key={m.merchantId}
+                    className="p-3.5 sm:p-4 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                  >
+                    {/* Left: Avatar & Identity */}
+                    <div className="flex items-center gap-3 min-w-[220px]">
+                      <div className="w-10 h-10 rounded-xl bg-slate-900 dark:bg-slate-800 text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-xs">
+                        {m.name.split(' ').map((n) => n[0]).join('').slice(0, 2)}
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-extrabold text-xs text-slate-900 dark:text-white">
+                            {m.name}
+                          </span>
+                          <BadgeCheck className="w-3.5 h-3.5 text-sky-500" />
+                          <span className="text-[10px] font-mono font-bold px-1.5 py-0.2 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
+                            {m.merchantId}
+                          </span>
+                        </div>
+                        <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium block">
+                          {m.businessName} • {m.tradeSector || m.businessType}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Middle: Location & Monthly Metrics */}
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-6 text-xs text-slate-600 dark:text-slate-400 sm:px-2">
+                      <div>
+                        <span className="text-[10px] text-slate-400 block">Monthly Turnover</span>
+                        <span className="font-mono font-extrabold text-emerald-600 dark:text-emerald-400 text-xs">
+                          ₹{(m.monthlySales || 150000).toLocaleString('en-IN')}
+                        </span>
+                      </div>
+
+                      <div>
+                        <span className="text-[10px] text-slate-400 block">Location</span>
+                        <span className="font-medium text-slate-800 dark:text-slate-200 text-xs truncate block max-w-[120px]">
+                          {m.location}
+                        </span>
+                      </div>
+
+                      <div className="hidden sm:block">
+                        <span className="text-[10px] text-slate-400 block">Dialect &amp; Score</span>
+                        <span className="font-medium text-slate-800 dark:text-slate-200 text-xs">
+                          {m.preferredLanguage} ({m.digitalTransactionScore}/100)
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Right: 1-Click Action Button */}
+                    <button
+                      onClick={() => handleQuickLogin(m.merchantId)}
+                      disabled={isLoading}
+                      className="px-4 py-2 rounded-xl bg-slate-900 dark:bg-slate-800 hover:bg-emerald-600 dark:hover:bg-emerald-600 text-white text-xs font-bold transition-all flex items-center justify-center gap-1.5 shrink-0 shadow-xs cursor-pointer"
+                    >
+                      <LogIn className="w-3.5 h-3.5" />
+                      <span>Log In as {m.name.split(' ')[0]}</span>
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* TAB 3: SIGN UP / ONBOARD NEW MERCHANT FORM */}
+          {activeTab === 'signup' && (
             <form onSubmit={handleRegister} className="space-y-4">
               <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xs space-y-4">
                 <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
@@ -380,11 +405,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       Register &amp; Onboard Business Profile
                     </h3>
                     <p className="text-xs text-slate-500 mt-0.5">
-                      Enter your store details to generate instant Account Aggregator digital credit scores.
+                      Create a new merchant account with instant Account Aggregator digital credit scoring.
                     </p>
                   </div>
                   <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2.5 py-1 rounded-lg">
-                    Instant Active Context
+                    Instant Active Session
                   </span>
                 </div>
 
@@ -486,7 +511,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
                   <div>
                     <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
-                      Preferred Language
+                      Preferred Dialect / Language
                     </label>
                     <select
                       value={regLanguage}
@@ -514,7 +539,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   ) : (
                     <>
                       <UserPlus className="w-4 h-4" />
-                      <span>Complete Registration &amp; Log In</span>
+                      <span>Complete Registration &amp; Sign In</span>
                     </>
                   )}
                 </button>
