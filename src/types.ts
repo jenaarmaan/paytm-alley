@@ -85,6 +85,35 @@ export interface InsuranceIntent {
   engine?: 'gemini' | 'sarvam' | 'deterministic';
 }
 
+export type FinTechServiceCategory = 
+  | 'loan_request'
+  | 'insurance_enrollment'
+  | 'insurance_claim'
+  | 'payment_reschedule'
+  | 'instant_repay'
+  | 'business_health_inquiry'
+  | 'ledger_balance_inquiry'
+  | 'general_inquiry';
+
+export interface UnifiedFinTechIntent {
+  category: FinTechServiceCategory;
+  serviceTitle: string;
+  summary: string;
+  amount?: number | null;
+  purpose?: string;
+  productId?: string;
+  productName?: string;
+  rescheduleDays?: number;
+  rescheduleReason?: string;
+  confidence: number;
+  language: SupportedLanguage;
+  spokenResponse: string;
+  rawTranscript: string;
+  engine: 'sarvam' | 'gemini' | 'deterministic';
+  suggestedActionLabel: string;
+  suggestedActionPayload?: any;
+}
+
 export interface UnderwritingConfig {
   maxDebtServiceRatio: number; // e.g. 0.30
   maxLoanToCashflowMultiplier: number; // e.g. 2.0

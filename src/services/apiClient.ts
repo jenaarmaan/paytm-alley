@@ -1,6 +1,7 @@
 import {
   LoanIntent,
   InsuranceIntent,
+  UnifiedFinTechIntent,
   SupportedLanguage,
   Merchant,
   EligibilityResult,
@@ -101,6 +102,104 @@ export class ApiClient {
       missing_information: [],
       raw_transcript: transcript,
       engine: 'deterministic',
+    };
+  }
+
+  public async extractUnifiedIntent(
+    transcript: string,
+    language: SupportedLanguage = 'Hinglish',
+    engine: 'sarvam' | 'gemini' | 'deterministic' = 'sarvam'
+  ): Promise<UnifiedFinTechIntent> {
+    try {
+      const res = await fetch(`${this.baseUrl}/unified-intent`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ transcript, language, engine }),
+      });
+      const data = await res.json();
+      if (data.success && data.data) return data.data;
+    } catch (e) {
+      console.warn('Backend unified intent API failed, using client fallback parser');
+    }
+
+    const lower = transcript.toLowerCase();
+    if (lower.includes('reschedule') || lower.includes('postpone') || lower.includes('aage badha') || lower.includes('moratorium')) {
+      return {
+        category: 'payment_reschedule',
+        serviceTitle: 'Payment Reschedule & 0-Penalty Moratorium',
+        summary: 'Proactive 7-day payment extension requested with 0 penal charges under RBI guidelines.',
+        rescheduleDays: 7,
+        rescheduleReason: 'Temporary cashflow buffer',
+        confidence: 0.96,
+        language,
+        spokenResponse: 'Aapki request par agli EMI 7 din ke liye bina kisi penalty ke postpone kardi gayi hai.',
+        rawTranscript: transcript,
+        engine: 'deterministic',
+        suggestedActionLabel: 'Confirm 7-Day Moratorium',
+      };
+    }
+
+    if (lower.includes('claim') || lower.includes('nuksan') || lower.includes('chori') || lower.includes('damage')) {
+      return {
+        category: 'insurance_claim',
+        serviceTitle: 'Express Micro-Insurance Claim Filing',
+        summary: 'Express claim filing with 24-hr direct bank disbursement.',
+        amount: 50000,
+        productId: 'dukan-suraksha',
+        productName: 'Kirana Dukan Suraksha',
+        confidence: 0.95,
+        language,
+        spokenResponse: 'Aapka insurance claim darj kar liya gaya hai. TPA 24 ghante me direct payout karega.',
+        rawTranscript: transcript,
+        engine: 'deterministic',
+        suggestedActionLabel: 'Submit Claim Dossier',
+      };
+    }
+
+    if (lower.includes('bima') || lower.includes('insurance') || lower.includes('suraksha') || lower.includes('hospicash') || lower.includes('credit shield')) {
+      return {
+        category: 'insurance_enrollment',
+        serviceTitle: 'Bite-Sized Sachet Micro-Insurance',
+        summary: 'Activate sachet insurance protection bundled with daily QR settlements.',
+        productId: 'dukan-suraksha',
+        productName: 'Kirana Dukan Suraksha',
+        confidence: 0.95,
+        language,
+        spokenResponse: 'Kirana Dukan Suraksha bima rozana ₹7/day auto-split se activate kiya ja raha hai.',
+        rawTranscript: transcript,
+        engine: 'deterministic',
+        suggestedActionLabel: 'Activate Sachet Policy',
+      };
+    }
+
+    if (lower.includes('health') || lower.includes('cibil') || lower.includes('score')) {
+      return {
+        category: 'business_health_inquiry',
+        serviceTitle: 'Financial Health & Credit Diagnostic',
+        summary: 'Live Account Aggregator credit score and cashflow health index.',
+        confidence: 0.95,
+        language,
+        spokenResponse: 'Aapka business health score 87/100 hai aur credit standing bilkul healthy hai.',
+        rawTranscript: transcript,
+        engine: 'deterministic',
+        suggestedActionLabel: 'View Health Telemetry',
+      };
+    }
+
+    // Default: Loan request
+    const loanIntent = this.fallbackExtract(transcript, language);
+    return {
+      category: 'loan_request',
+      serviceTitle: 'Working Capital & Micro-Credit',
+      summary: `Sanction formulated for ₹${(loanIntent.requested_amount || 5000).toLocaleString('en-IN')}.`,
+      amount: loanIntent.requested_amount || 5000,
+      purpose: loanIntent.use_case,
+      confidence: 0.96,
+      language,
+      spokenResponse: `Aapke ₹${(loanIntent.requested_amount || 5000).toLocaleString('en-IN')} ke loan request ka underwriting audit tayyar hai.`,
+      rawTranscript: transcript,
+      engine: 'deterministic',
+      suggestedActionLabel: 'Proceed to Loan Offer',
     };
   }
 

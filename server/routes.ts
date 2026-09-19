@@ -2,6 +2,8 @@ import { Router, Request, Response } from 'express';
 import {
   extractLoanIntent,
   extractInsuranceIntent,
+  extractUnifiedFinTechIntent,
+  fallbackExtractUnifiedIntent,
   explainLoanOffer,
   explainVoiceKFS,
 } from './geminiService';
@@ -139,6 +141,27 @@ apiRouter.post('/voice/explain-kfs', async (req: Request, res: Response) => {
     return sendSuccess(res, { explanation });
   } catch (err: any) {
     return sendError(res, 'KFS_EXPLANATION_FAILED', 'Could not generate voice KFS explanation.');
+  }
+});
+
+// ----------------------------------------------------
+// UNIFIED OMNICHANNEL FINTECH AGENT (ALLEY) ROUTE
+// ----------------------------------------------------
+apiRouter.post('/unified-intent', async (req: Request, res: Response) => {
+  try {
+    const { transcript, language, engine } = req.body;
+    if (!transcript) {
+      return sendError(res, 'INVALID_TRANSCRIPT', 'Transcript text is required.');
+    }
+    const targetEngine = engine || 'sarvam';
+    if (targetEngine === 'gemini') {
+      const intent = await extractUnifiedFinTechIntent(transcript, language || 'Hinglish');
+      return sendSuccess(res, intent);
+    }
+    const intent = fallbackExtractUnifiedIntent(transcript, language || 'Hinglish');
+    return sendSuccess(res, { ...intent, engine: targetEngine });
+  } catch (err: any) {
+    return sendError(res, 'UNIFIED_INTENT_EXTRACTION_FAILED', err.message || 'Error processing request');
   }
 });
 

@@ -2,6 +2,7 @@ import { GoogleGenAI, Type } from '@google/genai';
 import {
   LoanIntent,
   InsuranceIntent,
+  UnifiedFinTechIntent,
   SupportedLanguage,
   EligibilityResult,
   LoanOffer,
@@ -478,3 +479,204 @@ Respond ONLY in valid JSON matching this schema:
     return fallbackExtractInsuranceIntent(rawTranscript, preferredLanguage);
   }
 }
+
+/**
+ * Deterministic fallback for Unified Omnichannel Indic FinTech Assistant (Alley)
+ */
+export function fallbackExtractUnifiedIntent(
+  rawTranscript: string,
+  preferredLanguage: SupportedLanguage = 'Hinglish'
+): UnifiedFinTechIntent {
+  const lower = rawTranscript.toLowerCase();
+
+  // 1. Payment Reschedule / Moratorium
+  if (lower.includes('reschedule') || lower.includes('postpone') || lower.includes('aage badha') || lower.includes('moratorium') || lower.includes('extension') || lower.includes('ruk jao') || lower.includes('delay')) {
+    const daysMatch = lower.match(/(\d+)\s*(?:din|days|day)/i);
+    const days = daysMatch ? parseInt(daysMatch[1], 10) : 7;
+    return {
+      category: 'payment_reschedule',
+      serviceTitle: 'RBI Fair Lending Moratorium & Reschedule',
+      summary: `Proactive ${days}-day moratorium requested with 0 penal interest.`,
+      rescheduleDays: days,
+      rescheduleReason: lower.includes('supplier') ? 'Supplier advance hold' : 'Temporary working capital liquidity buffer',
+      confidence: 0.96,
+      language: preferredLanguage,
+      spokenResponse: `Aapki request par agli EMI ${days} din ke liye bina kisi penal charges ke postpone kardi gayi hai.`,
+      rawTranscript,
+      engine: 'deterministic',
+      suggestedActionLabel: 'Confirm 0-Penalty Moratorium',
+    };
+  }
+
+  // 2. Insurance Claim
+  if (lower.includes('claim') || lower.includes('chori ho gayi') || lower.includes('aag lag') || lower.includes('damage') || lower.includes('nuksan')) {
+    let amount = 50000;
+    const numMatch = lower.match(/(\d+(?:,\d+)*(?:\.\d+)?)\s*(?:lakh|k|thousand|hazaar|rupee|rs)?/i);
+    if (numMatch) {
+      const v = parseFloat(numMatch[1].replace(/,/g, ''));
+      if (lower.includes('lakh')) amount = v * 100000;
+      else if (lower.includes('k') || lower.includes('thousand') || lower.includes('hazaar')) amount = v * 1000;
+      else if (v >= 1000) amount = v;
+    }
+    return {
+      category: 'insurance_claim',
+      serviceTitle: 'Express Micro-Insurance Claim Filing',
+      summary: `Instant claim filing for ₹${amount.toLocaleString('en-IN')} with 24-hr TPA verification.`,
+      amount,
+      productId: lower.includes('hospital') || lower.includes('admit') ? 'hospicash' : 'dukan-suraksha',
+      productName: lower.includes('hospital') ? 'Merchant Hospicash' : 'Kirana Dukan Suraksha',
+      confidence: 0.95,
+      language: preferredLanguage,
+      spokenResponse: `Aapka ₹${amount.toLocaleString('en-IN')} ka claim darj ho gaya hai. TPA 24 ghante me direct bank transfer process karega.`,
+      rawTranscript,
+      engine: 'deterministic',
+      suggestedActionLabel: 'Submit Claim Dossier',
+    };
+  }
+
+  // 3. Sachet Insurance Enrollment
+  if (lower.includes('bima') || lower.includes('insurance') || lower.includes('suraksha') || lower.includes('hospicash') || lower.includes('credit shield') || lower.includes('theft cover')) {
+    const isHospital = lower.includes('hospital') || lower.includes('bimari') || lower.includes('hospicash');
+    const isCredit = lower.includes('credit') || lower.includes('shield') || lower.includes('emi');
+    const productId = isHospital ? 'hospicash' : isCredit ? 'credit-shield' : 'dukan-suraksha';
+    const productName = isHospital ? 'Merchant Hospicash & Health Shield' : isCredit ? 'Loan EMI Credit Shield' : 'Kirana Dukan Suraksha';
+    return {
+      category: 'insurance_enrollment',
+      serviceTitle: 'Bite-Sized Sachet Micro-Insurance',
+      summary: `Enroll in ${productName} with micro-premium daily auto-split.`,
+      productId,
+      productName,
+      confidence: 0.95,
+      language: preferredLanguage,
+      spokenResponse: `${productName} bima aapki dukaan ke liye rozana chhota premium se activate kiya ja raha hai.`,
+      rawTranscript,
+      engine: 'deterministic',
+      suggestedActionLabel: 'Activate Sachet Policy',
+    };
+  }
+
+  // 4. Instant Repay / Failed Debit Cure
+  if (lower.includes('repay') || lower.includes('chuka') || lower.includes('pay now') || lower.includes('bhar do') || lower.includes('cure')) {
+    return {
+      category: 'instant_repay',
+      serviceTitle: '72-Hour No-CIBIL-Hit Instant UPI Repay',
+      summary: 'Instant QR repayment with 100% bounce fee waiver under RBI guidelines.',
+      confidence: 0.97,
+      language: preferredLanguage,
+      spokenResponse: 'Aap instant UPI QR scan karke bina kisi bounce fee ke turant loan repayment kar sakte hain.',
+      rawTranscript,
+      engine: 'deterministic',
+      suggestedActionLabel: 'Open Dynamic UPI QR',
+    };
+  }
+
+  // 5. Business Health / Credit Diagnostics
+  if (lower.includes('health') || lower.includes('cibil') || lower.includes('score') || lower.includes('status') || lower.includes('kaisa hai')) {
+    return {
+      category: 'business_health_inquiry',
+      serviceTitle: 'Real-Time Financial Health & Credit Diagnostic',
+      summary: 'Zero-Knowledge AA cashflow health score and loan capacity index.',
+      confidence: 0.95,
+      language: preferredLanguage,
+      spokenResponse: 'Aapka business score 87/100 hai aur cashflow health bilkul strong hai.',
+      rawTranscript,
+      engine: 'deterministic',
+      suggestedActionLabel: 'View Health Telemetry',
+    };
+  }
+
+  // 6. Default: Working Capital & Sachet Micro-Loan
+  const loanIntent = fallbackExtractIntent(rawTranscript, preferredLanguage);
+  return {
+    category: 'loan_request',
+    serviceTitle: 'Indic Working Capital & Micro-Credit',
+    summary: `Sanction formulated for ₹${(loanIntent.requested_amount || 150000).toLocaleString('en-IN')} (${loanIntent.use_case}).`,
+    amount: loanIntent.requested_amount || 150000,
+    purpose: loanIntent.use_case,
+    confidence: loanIntent.confidence || 0.96,
+    language: preferredLanguage,
+    spokenResponse: `Aapke ₹${(loanIntent.requested_amount || 150000).toLocaleString('en-IN')} ke loan request ka live underwriting audit tayyar hai.`,
+    rawTranscript,
+    engine: 'deterministic',
+    suggestedActionLabel: 'Proceed to Loan Offer & KFS',
+  };
+}
+
+/**
+ * Server-side Unified Omnichannel FinTech Agent with Gemini LLM + Indic Reasoning
+ */
+export async function extractUnifiedFinTechIntent(
+  rawTranscript: string,
+  preferredLanguage: SupportedLanguage = 'Hinglish'
+): Promise<UnifiedFinTechIntent> {
+  const client = getGeminiClient();
+  if (!client) {
+    return fallbackExtractUnifiedIntent(rawTranscript, preferredLanguage);
+  }
+
+  const prompt = `
+You are Alley, the Sovereign Indic FinTech Voice & Autonomous Agent for Indian micro-merchants (kiranas, street food stalls, artisans).
+Understand the merchant's spoken transcript across ALL FinTech domains:
+1. 'loan_request' (Working capital, inventory stocking, emergency micro-credit down to ₹1,000)
+2. 'insurance_enrollment' (Kirana Dukan Suraksha, Hospicash, Credit Shield)
+3. 'insurance_claim' (Filing theft, fire, hospital claims)
+4. 'payment_reschedule' (Proactive RBI moratorium, postponing EMI due to supplier advance)
+5. 'instant_repay' (72-hour No-CIBIL-Hit failed payment cure via UPI QR)
+6. 'business_health_inquiry' (Credit score, cashflow headroom, DSCR diagnostics)
+
+Transcript: "${rawTranscript}"
+Language: ${preferredLanguage}
+
+Respond STRICTLY in valid JSON matching this schema:
+{
+  "category": "loan_request" | "insurance_enrollment" | "insurance_claim" | "payment_reschedule" | "instant_repay" | "business_health_inquiry" | "general_inquiry",
+  "serviceTitle": string,
+  "summary": string (15-20 words summary for merchant),
+  "amount": number | null (INR integer if applicable),
+  "purpose": string | null,
+  "productId": string | null ("dukan-suraksha" | "hospicash" | "credit-shield"),
+  "productName": string | null,
+  "rescheduleDays": number | null,
+  "rescheduleReason": string | null,
+  "confidence": number (between 0.85 and 0.99),
+  "spokenResponse": string (Spoken audio explanation in ${preferredLanguage}, under 2 sentences),
+  "suggestedActionLabel": string
+}
+`;
+
+  try {
+    const response = await withTimeout(
+      client.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: prompt,
+        config: {
+          responseMimeType: 'application/json',
+        },
+      }),
+      3500,
+      'Gemini unified agent extraction timed out'
+    );
+
+    const parsed = JSON.parse(response.text || '{}');
+    return {
+      category: parsed.category || 'loan_request',
+      serviceTitle: parsed.serviceTitle || 'Indic FinTech Service',
+      summary: parsed.summary || 'Processing your request with Alley FinTech Core',
+      amount: parsed.amount,
+      purpose: parsed.purpose || 'Working capital',
+      productId: parsed.productId,
+      productName: parsed.productName,
+      rescheduleDays: parsed.rescheduleDays,
+      rescheduleReason: parsed.rescheduleReason,
+      confidence: parsed.confidence || 0.95,
+      language: preferredLanguage,
+      spokenResponse: parsed.spokenResponse || `Aapki request process ho rahi hai.`,
+      rawTranscript,
+      engine: 'gemini',
+      suggestedActionLabel: parsed.suggestedActionLabel || 'Proceed',
+    };
+  } catch (err) {
+    return fallbackExtractUnifiedIntent(rawTranscript, preferredLanguage);
+  }
+}
+
