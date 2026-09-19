@@ -839,6 +839,7 @@ export function App() {
           handleStartVoiceLoan(prompt);
         }}
         onOpenCapitalRails={() => setIsCapitalFlowModalOpen(true)}
+        onNavigateToMCP={() => setCurrentView('enterprise-integrations')}
       />
 
       {/* Production-Grade Merchant Authentication Modal (Login / OTP / Register) */}

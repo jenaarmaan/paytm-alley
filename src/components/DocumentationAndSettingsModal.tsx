@@ -22,10 +22,15 @@ import {
   UserPlus,
   Lock,
   FileCheck2,
-  Code
+  Code,
+  Terminal,
+  Copy,
+  Check,
+  Server
 } from 'lucide-react';
 import { Merchant, SupportedLanguage } from '../types';
 import { apiClient } from '../services/apiClient';
+import { MCP_TOOLS_CATALOG } from '../data/seedData';
 
 interface DocumentationAndSettingsModalProps {
   isOpen: boolean;
@@ -43,12 +48,13 @@ interface DocumentationAndSettingsModalProps {
   onOpenOnboarding: () => void;
   onStartVoiceLoanWithPrompt?: (prompt: string, lang?: SupportedLanguage) => void;
   onOpenCapitalRails?: () => void;
+  onNavigateToMCP?: () => void;
 }
 
 export const DocumentationAndSettingsModal: React.FC<DocumentationAndSettingsModalProps> = ({
   isOpen,
   onClose,
-  initialTab = 'personas',
+  initialTab = 'settings',
   merchants,
   activeMerchantId,
   onSelectMerchant,
@@ -61,10 +67,12 @@ export const DocumentationAndSettingsModal: React.FC<DocumentationAndSettingsMod
   onOpenOnboarding,
   onStartVoiceLoanWithPrompt,
   onOpenCapitalRails,
+  onNavigateToMCP,
 }) => {
   const [activeTab, setActiveTab] = useState<'personas' | 'settings' | 'documentation' | 'rails'>(initialTab);
   const [isPingingSarvam, setIsPingingSarvam] = useState(false);
   const [sarvamPingResult, setSarvamPingResult] = useState<{ latencyMs: number; success: boolean; response?: any; error?: string } | null>(null);
+  const [copiedMcpConfig, setCopiedMcpConfig] = useState(false);
 
   if (!isOpen) return null;
 
@@ -81,6 +89,22 @@ export const DocumentationAndSettingsModal: React.FC<DocumentationAndSettingsMod
     } finally {
       setIsPingingSarvam(false);
     }
+  };
+
+  const handleCopyMcpConfig = () => {
+    const config = {
+      mcpServers: {
+        paytmVoiceLend: {
+          url: `${window.location.origin}/api/mcp`,
+          description: "Paytm VoiceLend Model Context Protocol Server for Indic Underwriting & Micro-Loans",
+          protocolVersion: "2024-11-05",
+          tools: MCP_TOOLS_CATALOG.map(t => t.name)
+        }
+      }
+    };
+    navigator.clipboard.writeText(JSON.stringify(config, null, 2));
+    setCopiedMcpConfig(true);
+    setTimeout(() => setCopiedMcpConfig(false), 2000);
   };
 
   const languages: SupportedLanguage[] = [
@@ -106,19 +130,19 @@ export const DocumentationAndSettingsModal: React.FC<DocumentationAndSettingsMod
         <div className="px-6 py-4 bg-slate-900 text-white flex items-center justify-between border-b border-slate-800">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 via-sky-600 to-emerald-500 flex items-center justify-center font-bold text-white shadow-md">
-              <BookOpen className="w-5 h-5" />
+              <Settings className="w-5 h-5" />
             </div>
             <div>
               <div className="flex items-center gap-2">
                 <h2 className="font-extrabold text-base sm:text-lg tracking-tight">
-                  Documentation, Demo Personas & Settings Hub
+                  System Settings, MCP & Documentation Hub
                 </h2>
                 <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
                   Indic FinTech
                 </span>
               </div>
               <p className="text-xs text-slate-400">
-                Switch demo merchant logins, configure AI core settings, and inspect system architecture
+                Single point of contact for profile switching, MCP tools, AI core, and architecture
               </p>
             </div>
           </div>
@@ -126,7 +150,7 @@ export const DocumentationAndSettingsModal: React.FC<DocumentationAndSettingsMod
           <button
             id="btn-close-docs-settings"
             onClick={onClose}
-            className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+            className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
             title="Close"
           >
             <X className="w-5 h-5" />
@@ -136,200 +160,205 @@ export const DocumentationAndSettingsModal: React.FC<DocumentationAndSettingsMod
         {/* Tab Navigation */}
         <div className="px-6 bg-slate-950/90 text-white flex items-center gap-2 border-b border-slate-800 overflow-x-auto">
           <button
-            onClick={() => setActiveTab('personas')}
-            className={`flex items-center gap-2 py-3 px-3 text-xs font-bold border-b-2 transition-all whitespace-nowrap ${
-              activeTab === 'personas'
-                ? 'border-emerald-400 text-emerald-400 bg-slate-900/60'
-                : 'border-transparent text-slate-400 hover:text-slate-200'
-            }`}
-          >
-            <Users className="w-4 h-4" />
-            <span>Demo Personas ({Object.keys(merchants).length})</span>
-          </button>
-
-          <button
             onClick={() => setActiveTab('settings')}
-            className={`flex items-center gap-2 py-3 px-3 text-xs font-bold border-b-2 transition-all whitespace-nowrap ${
+            className={`flex items-center gap-2 py-3 px-3 text-xs font-bold border-b-2 transition-all whitespace-nowrap cursor-pointer ${
               activeTab === 'settings'
                 ? 'border-emerald-400 text-emerald-400 bg-slate-900/60'
                 : 'border-transparent text-slate-400 hover:text-slate-200'
             }`}
           >
             <Settings className="w-4 h-4" />
-            <span>System Settings & AI Core</span>
+            <span>System Settings &amp; Profile</span>
           </button>
 
           <button
             onClick={() => setActiveTab('documentation')}
-            className={`flex items-center gap-2 py-3 px-3 text-xs font-bold border-b-2 transition-all whitespace-nowrap ${
+            className={`flex items-center gap-2 py-3 px-3 text-xs font-bold border-b-2 transition-all whitespace-nowrap cursor-pointer ${
               activeTab === 'documentation'
                 ? 'border-emerald-400 text-emerald-400 bg-slate-900/60'
                 : 'border-transparent text-slate-400 hover:text-slate-200'
             }`}
           >
             <BookOpen className="w-4 h-4" />
-            <span>Architecture & Specs</span>
+            <span>Architecture &amp; MCP Specs</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('personas')}
+            className={`flex items-center gap-2 py-3 px-3 text-xs font-bold border-b-2 transition-all whitespace-nowrap cursor-pointer ${
+              activeTab === 'personas'
+                ? 'border-emerald-400 text-emerald-400 bg-slate-900/60'
+                : 'border-transparent text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <Users className="w-4 h-4" />
+            <span>Persona Directory ({Object.keys(merchants).length})</span>
           </button>
 
           <button
             onClick={() => setActiveTab('rails')}
-            className={`flex items-center gap-2 py-3 px-3 text-xs font-bold border-b-2 transition-all whitespace-nowrap ${
+            className={`flex items-center gap-2 py-3 px-3 text-xs font-bold border-b-2 transition-all whitespace-nowrap cursor-pointer ${
               activeTab === 'rails'
                 ? 'border-emerald-400 text-emerald-400 bg-slate-900/60'
                 : 'border-transparent text-slate-400 hover:text-slate-200'
             }`}
           >
             <Zap className="w-4 h-4" />
-            <span>Capital Rails & Compliance</span>
+            <span>Capital Rails &amp; Escrow</span>
           </button>
         </div>
 
         {/* Modal Content Area */}
         <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-slate-50 dark:bg-slate-950/40">
           
-          {/* TAB 1: DEMO PERSONAS & MULTI-USER LOGINS */}
-          {activeTab === 'personas' && (
-            <div className="space-y-6">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xs">
-                <div>
-                  <h3 className="text-sm font-extrabold text-slate-900 dark:text-white">
-                    Select Demo Merchant Profile
-                  </h3>
-                  <p className="text-xs text-slate-500 mt-0.5">
-                    Click any merchant persona below to instantly switch the entire platform context, credit limits, and telemetry.
-                  </p>
-                </div>
-                <button
-                  onClick={() => {
-                    onClose();
-                    onOpenOnboarding();
-                  }}
-                  className="px-4 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-bold rounded-xl shadow-xs flex items-center gap-1.5 shrink-0 self-start sm:self-auto cursor-pointer"
-                >
-                  <UserPlus className="w-4 h-4" />
-                  <span>+ Onboard New Persona</span>
-                </button>
-              </div>
-
-              {/* Grid of Merchant Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {Object.values(merchants).map((m) => {
-                  const isSelected = m.merchantId === activeMerchantId;
-                  return (
-                    <div
-                      key={m.merchantId}
-                      className={`p-4 rounded-2xl border transition-all relative flex flex-col justify-between ${
-                        isSelected
-                          ? 'bg-gradient-to-br from-emerald-50/90 to-teal-50/40 dark:from-emerald-950/40 dark:to-slate-900 border-emerald-500 shadow-md ring-2 ring-emerald-500/20'
-                          : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-slate-300 shadow-2xs'
-                      }`}
-                    >
-                      <div>
-                        {/* Header with Avatar and ID */}
-                        <div className="flex items-start justify-between gap-2 mb-3">
-                          <div className="flex items-center gap-2.5">
-                            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-slate-900 via-indigo-950 to-slate-800 text-white flex items-center justify-center font-bold text-xs shadow-xs">
-                              {m.name.split(' ').map((n) => n[0]).join('').slice(0, 2)}
-                            </div>
-                            <div>
-                              <div className="flex items-center gap-1">
-                                <span className="font-extrabold text-xs text-slate-900 dark:text-white">
-                                  {m.name}
-                                </span>
-                                <BadgeCheck className="w-3.5 h-3.5 text-sky-500" />
-                              </div>
-                              <span className="text-[11px] text-slate-500 font-medium block">
-                                {m.businessName}
-                              </span>
-                            </div>
-                          </div>
-
-                          <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
-                            {m.merchantId}
-                          </span>
-                        </div>
-
-                        {/* Details Pill */}
-                        <div className="space-y-1.5 text-xs text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-950/60 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800/80 mb-3">
-                          <div className="flex items-center justify-between">
-                            <span className="text-slate-400 text-[11px]">Sector:</span>
-                            <span className="font-bold text-slate-800 dark:text-slate-200">
-                              {m.tradeSector || m.businessType}
-                            </span>
-                          </div>
-                          <div className="flex items-center justify-between">
-                            <span className="text-slate-400 text-[11px]">Monthly Sales:</span>
-                            <span className="font-extrabold text-emerald-600 dark:text-emerald-400 font-mono">
-                              ₹{(m.monthlySales || 150000).toLocaleString('en-IN')}
-                            </span>
-                          </div>
-                          <div className="flex items-center justify-between">
-                            <span className="text-slate-400 text-[11px]">Location & Language:</span>
-                            <span className="font-medium text-slate-700 dark:text-slate-300">
-                              {m.location} ({m.preferredLanguage})
-                            </span>
-                          </div>
-                          <div className="flex items-center justify-between">
-                            <span className="text-slate-400 text-[11px]">Digital Score:</span>
-                            <span className="font-bold text-indigo-600 dark:text-indigo-400">
-                              {m.digitalTransactionScore}/100 ({m.businessHealth})
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Action buttons */}
-                      <div className="flex items-center gap-2 pt-1 border-t border-slate-100 dark:border-slate-800">
-                        <button
-                          onClick={() => {
-                            onSelectMerchant(m.merchantId);
-                            onClose();
-                          }}
-                          className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1 cursor-pointer ${
-                            isSelected
-                              ? 'bg-emerald-600 text-white shadow-xs'
-                              : 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 hover:bg-emerald-50 hover:text-emerald-900'
-                          }`}
-                        >
-                          {isSelected ? (
-                            <>
-                              <CheckCircle2 className="w-3.5 h-3.5" />
-                              <span>Active Profile</span>
-                            </>
-                          ) : (
-                            <span>Switch to Profile</span>
-                          )}
-                        </button>
-
-                        {onStartVoiceLoanWithPrompt && (
-                          <button
-                            onClick={() => {
-                              onSelectMerchant(m.merchantId);
-                              onClose();
-                              onStartVoiceLoanWithPrompt(
-                                `Mujhe 2 lakh ka loan chahiye ${m.businessName} ke liye`,
-                                m.preferredLanguage
-                              );
-                            }}
-                            className="p-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white transition-colors cursor-pointer"
-                            title="Launch Voice Loan for this merchant"
-                          >
-                            <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          {/* TAB 2: SYSTEM SETTINGS & AI CORE */}
+          {/* TAB 1: SYSTEM SETTINGS, PROFILE DROPDOWN & MCP (Single Point of Contact) */}
           {activeTab === 'settings' && (
             <div className="space-y-6">
               
-              {/* Language Preferences */}
+              {/* SECTION 1: CLEAN PROFILE SWITCHER DROPDOWN */}
+              <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xs space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 pb-3">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <Store className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                      <h3 className="text-sm font-extrabold text-slate-900 dark:text-white">
+                        Merchant Profile Management
+                      </h3>
+                    </div>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      Single point of contact for instant merchant profile selection and underwriting context.
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      onClose();
+                      onOpenOnboarding();
+                    }}
+                    className="px-3 py-1.5 bg-emerald-50 dark:bg-emerald-950/60 hover:bg-emerald-100 text-emerald-700 dark:text-emerald-300 text-xs font-bold rounded-xl border border-emerald-200 dark:border-emerald-800 flex items-center gap-1.5 self-start sm:self-auto cursor-pointer"
+                  >
+                    <UserPlus className="w-3.5 h-3.5" />
+                    <span>+ Onboard New Merchant</span>
+                  </button>
+                </div>
+
+                {/* Dropdown Selector */}
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
+                  <div className="md:col-span-6 space-y-1.5">
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                      Switch Active Merchant Profile:
+                    </label>
+                    <div className="relative">
+                      <select
+                        value={activeMerchantId}
+                        onChange={(e) => onSelectMerchant(e.target.value)}
+                        className="w-full pl-3.5 pr-8 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer"
+                      >
+                        {Object.values(merchants).map((m) => (
+                          <option key={m.merchantId} value={m.merchantId}>
+                            [{m.merchantId}] {m.name} — {m.businessName} (₹{(m.monthlySales || 150000).toLocaleString('en-IN')}/mo)
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Active Profile Snapshot Card */}
+                  <div className="md:col-span-6 p-3.5 bg-slate-50 dark:bg-slate-950/70 rounded-xl border border-slate-200/80 dark:border-slate-800 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-slate-900 via-indigo-950 to-slate-800 text-white flex items-center justify-center font-bold text-xs shadow-xs">
+                        {activeMerchant.name.split(' ').map((n) => n[0]).join('').slice(0, 2)}
+                      </div>
+                      <div>
+                        <div className="text-xs font-extrabold text-slate-900 dark:text-white flex items-center gap-1">
+                          <span>{activeMerchant.name}</span>
+                          <BadgeCheck className="w-3.5 h-3.5 text-sky-500" />
+                        </div>
+                        <span className="text-[11px] text-slate-500 font-medium block">
+                          {activeMerchant.businessName} • {activeMerchant.location}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-[10px] text-slate-400 block">Monthly Sales</span>
+                      <span className="text-xs font-extrabold font-mono text-emerald-600 dark:text-emerald-400">
+                        ₹{(activeMerchant.monthlySales || 150000).toLocaleString('en-IN')}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* SECTION 2: MODEL CONTEXT PROTOCOL (MCP) INTEGRATION */}
+              <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xs space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 pb-3">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <Server className="w-4 h-4 text-sky-600 dark:text-sky-400" />
+                      <h3 className="text-sm font-extrabold text-slate-900 dark:text-white">
+                        Model Context Protocol (MCP) &amp; Enterprise Core
+                      </h3>
+                      <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-sky-50 dark:bg-sky-950/60 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800">
+                        v2024.11 Active
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      Standardized protocol for AI Agents, NBFC core banking APIs, and credit underwriting execution.
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={handleCopyMcpConfig}
+                      className="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
+                      title="Copy MCP server configuration for Claude/Cursor/Agent IDE"
+                    >
+                      {copiedMcpConfig ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
+                      <span>{copiedMcpConfig ? 'Copied Config!' : 'Copy MCP JSON'}</span>
+                    </button>
+
+                    {onNavigateToMCP && (
+                      <button
+                        onClick={() => {
+                          onClose();
+                          onNavigateToMCP();
+                        }}
+                        className="px-3.5 py-1.5 bg-gradient-to-r from-sky-600 to-indigo-600 hover:from-sky-500 hover:to-indigo-500 text-white text-xs font-bold rounded-xl shadow-xs flex items-center gap-1.5 cursor-pointer"
+                      >
+                        <Terminal className="w-3.5 h-3.5" />
+                        <span>Open MCP Webpage ↗</span>
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                  <div className="p-3 bg-slate-50 dark:bg-slate-950/60 rounded-xl border border-slate-200/80 dark:border-slate-800">
+                    <span className="text-slate-400 text-[10px] font-mono block">ENDPOINT</span>
+                    <code className="text-sky-600 dark:text-sky-400 font-mono font-bold text-[11px] block mt-0.5">
+                      /api/mcp
+                    </code>
+                    <span className="text-[10px] text-slate-500 mt-1 block">JSON-RPC 2.0 tool execution server</span>
+                  </div>
+
+                  <div className="p-3 bg-slate-50 dark:bg-slate-950/60 rounded-xl border border-slate-200/80 dark:border-slate-800">
+                    <span className="text-slate-400 text-[10px] font-mono block">REGISTERED TOOLS</span>
+                    <span className="font-extrabold text-slate-800 dark:text-slate-200 text-xs block mt-0.5">
+                      {MCP_TOOLS_CATALOG.length} Core Banking Tools
+                    </span>
+                    <span className="text-[10px] text-slate-500 mt-1 block">Eligibility, KFS, Disbursal, Health</span>
+                  </div>
+
+                  <div className="p-3 bg-slate-50 dark:bg-slate-950/60 rounded-xl border border-slate-200/80 dark:border-slate-800">
+                    <span className="text-slate-400 text-[10px] font-mono block">SECURITY BOUNDARY</span>
+                    <span className="font-extrabold text-amber-600 dark:text-amber-400 text-xs block mt-0.5">
+                      Strict Read vs Action Gating
+                    </span>
+                    <span className="text-[10px] text-slate-500 mt-1 block">Disbursal requires explicit consent</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* SECTION 3: VERNACULAR INDIC LANGUAGE SELECTION */}
               <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xs space-y-3">
                 <h3 className="text-sm font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
                   <Volume2 className="w-4 h-4 text-emerald-600" />
@@ -339,7 +368,7 @@ export const DocumentationAndSettingsModal: React.FC<DocumentationAndSettingsMod
                   Select the default dialect for Indic speech recognition, key facts explanations, and voice feedback.
                 </p>
 
-                <div className="flex flex-wrap gap-2 pt-2">
+                <div className="flex flex-wrap gap-2 pt-1">
                   {languages.map((lang) => (
                     <button
                       key={lang}
@@ -347,7 +376,7 @@ export const DocumentationAndSettingsModal: React.FC<DocumentationAndSettingsMod
                       className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                         selectedLanguage === lang
                           ? 'bg-emerald-600 text-white shadow-xs'
-                          : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200'
+                          : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
                       }`}
                     >
                       {lang}
@@ -356,12 +385,12 @@ export const DocumentationAndSettingsModal: React.FC<DocumentationAndSettingsMod
                 </div>
               </div>
 
-              {/* AI Core Engine Selection */}
+              {/* SECTION 4: AI CORE & NLP ENGINE SELECTION */}
               <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xs space-y-3">
                 <div className="flex items-center justify-between">
                   <h3 className="text-sm font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
                     <Cpu className="w-4 h-4 text-indigo-600" />
-                    <span>AI Core & NLP Engine Selection</span>
+                    <span>AI Core &amp; NLP Engine Selection</span>
                   </h3>
                   <button
                     onClick={handleTestSarvam}
@@ -389,7 +418,7 @@ export const DocumentationAndSettingsModal: React.FC<DocumentationAndSettingsMod
                       {activeEngine === 'sarvam' && <CheckCircle2 className="w-4 h-4 text-amber-600" />}
                     </div>
                     <p className="text-[11px] text-slate-500 mt-1 leading-relaxed">
-                      Sovereign Indic Stack with Saaras STT & Bulbul TTS.
+                      Sovereign Indic Stack with Saaras STT &amp; Bulbul TTS.
                     </p>
                     <span className="text-[10px] font-bold text-amber-700 bg-amber-100/80 px-2 py-0.5 rounded mt-2 inline-block">
                       Recommended for Indic
@@ -411,7 +440,7 @@ export const DocumentationAndSettingsModal: React.FC<DocumentationAndSettingsMod
                       {activeEngine === 'gemini' && <CheckCircle2 className="w-4 h-4 text-indigo-600" />}
                     </div>
                     <p className="text-[11px] text-slate-500 mt-1 leading-relaxed">
-                      High-reasoning model for complex multi-intent conversational underwriting.
+                      High-reasoning model for complex multi-intent underwriting.
                     </p>
                   </div>
 
@@ -449,7 +478,7 @@ export const DocumentationAndSettingsModal: React.FC<DocumentationAndSettingsMod
                 )}
               </div>
 
-              {/* Audio Spoken Feedback Toggle */}
+              {/* SECTION 5: AUDIO FEEDBACK TOGGLE */}
               <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xs flex items-center justify-between">
                 <div>
                   <h3 className="text-sm font-extrabold text-slate-900 dark:text-white">
@@ -473,10 +502,50 @@ export const DocumentationAndSettingsModal: React.FC<DocumentationAndSettingsMod
             </div>
           )}
 
-          {/* TAB 3: SYSTEM ARCHITECTURE & DOCUMENTATION */}
+          {/* TAB 2: SYSTEM ARCHITECTURE & MCP SPECS */}
           {activeTab === 'documentation' && (
             <div className="space-y-6">
               
+              {/* MCP Tool Registry Summary Card */}
+              <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xs space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-sky-600 dark:text-sky-400">
+                    <Terminal className="w-4 h-4" />
+                    <h3 className="text-sm font-extrabold tracking-tight">
+                      Model Context Protocol (MCP) Tool Registry
+                    </h3>
+                  </div>
+                  {onNavigateToMCP && (
+                    <button
+                      onClick={() => {
+                        onClose();
+                        onNavigateToMCP();
+                      }}
+                      className="px-3 py-1 bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold rounded-lg transition-colors cursor-pointer"
+                    >
+                      Open Live MCP Playground ↗
+                    </button>
+                  )}
+                </div>
+                <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                  VoiceLend exposes {MCP_TOOLS_CATALOG.length} standardized MCP tools enabling autonomous agents and LLM orchestrators to safely execute deterministic financial computations and core banking workflows:
+                </p>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 pt-1">
+                  {MCP_TOOLS_CATALOG.map((tool) => (
+                    <div key={tool.name} className="p-2.5 bg-slate-50 dark:bg-slate-950/60 rounded-xl border border-slate-200 dark:border-slate-800 text-xs">
+                      <div className="flex items-center justify-between mb-1">
+                        <code className="font-mono font-bold text-slate-900 dark:text-white text-[11px]">{tool.name}</code>
+                        <span className={`text-[9px] font-bold px-1.5 py-0.2 rounded uppercase ${tool.type === 'ACTION' ? 'bg-amber-100 text-amber-900' : 'bg-sky-100 text-sky-900'}`}>
+                          {tool.type}
+                        </span>
+                      </div>
+                      <p className="text-[10px] text-slate-500 line-clamp-2">{tool.description}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
               {/* Dynamic Underwriting Math Specification */}
               <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xs space-y-3">
                 <div className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400">
@@ -546,12 +615,92 @@ export const DocumentationAndSettingsModal: React.FC<DocumentationAndSettingsMod
                 <div className="flex items-center gap-2 text-sky-600 dark:text-sky-400">
                   <Zap className="w-4 h-4" />
                   <h3 className="text-sm font-extrabold tracking-tight">
-                    Sachet Insurance & Daily QR Auto-Split Repayment
+                    Sachet Insurance &amp; Daily QR Auto-Split Repayment
                   </h3>
                 </div>
                 <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
                   Micro-premiums are auto-deducted daily from merchant Paytm Soundbox/UPI QR settlements (₹3 to ₹7/day). When cashflow dips occur, the platform activates a 72-hour No-CIBIL-Hit moratorium buffer with 100% bounce-fee waiver under RBI Fair Lending Directives.
                 </p>
+              </div>
+            </div>
+          )}
+
+          {/* TAB 3: PERSONA DIRECTORY */}
+          {activeTab === 'personas' && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800">
+                <div>
+                  <h3 className="text-sm font-extrabold text-slate-900 dark:text-white">
+                    All Registered Merchant Personas
+                  </h3>
+                  <p className="text-xs text-slate-500">
+                    Switch context or launch instant voice loans for any persona.
+                  </p>
+                </div>
+                <button
+                  onClick={() => {
+                    onClose();
+                    onOpenOnboarding();
+                  }}
+                  className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-xl flex items-center gap-1 cursor-pointer"
+                >
+                  <UserPlus className="w-3.5 h-3.5" />
+                  <span>+ New</span>
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
+                {Object.values(merchants).map((m) => {
+                  const isSelected = m.merchantId === activeMerchantId;
+                  return (
+                    <div
+                      key={m.merchantId}
+                      className={`p-4 rounded-2xl border transition-all flex flex-col justify-between ${
+                        isSelected
+                          ? 'bg-emerald-50/60 dark:bg-emerald-950/30 border-emerald-500 shadow-xs'
+                          : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800'
+                      }`}
+                    >
+                      <div>
+                        <div className="flex items-start justify-between gap-2 mb-2">
+                          <div className="flex items-center gap-2">
+                            <div className="w-8 h-8 rounded-lg bg-slate-900 text-white flex items-center justify-center font-bold text-xs">
+                              {m.name.split(' ').map((n) => n[0]).join('').slice(0, 2)}
+                            </div>
+                            <div>
+                              <div className="font-bold text-xs text-slate-900 dark:text-white flex items-center gap-1">
+                                <span>{m.name}</span>
+                                <BadgeCheck className="w-3 h-3 text-sky-500" />
+                              </div>
+                              <span className="text-[10px] text-slate-500">{m.businessName}</span>
+                            </div>
+                          </div>
+                          <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                            {m.merchantId}
+                          </span>
+                        </div>
+                        <div className="text-[11px] text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-950/60 p-2 rounded-lg space-y-1 mb-2">
+                          <div>Turnover: <strong className="text-emerald-600 dark:text-emerald-400 font-mono">₹{(m.monthlySales || 150000).toLocaleString('en-IN')}</strong></div>
+                          <div>Location: <strong>{m.location}</strong> ({m.preferredLanguage})</div>
+                        </div>
+                      </div>
+
+                      <button
+                        onClick={() => {
+                          onSelectMerchant(m.merchantId);
+                          onClose();
+                        }}
+                        className={`w-full py-1.5 px-3 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                          isSelected
+                            ? 'bg-emerald-600 text-white'
+                            : 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 hover:bg-emerald-600 hover:text-white'
+                        }`}
+                      >
+                        {isSelected ? 'Active Context' : 'Select Merchant'}
+                      </button>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}
@@ -602,12 +751,26 @@ export const DocumentationAndSettingsModal: React.FC<DocumentationAndSettingsMod
             <span className="w-2 h-2 rounded-full bg-emerald-500" />
             <span>Active Merchant: <strong className="text-slate-800 dark:text-slate-200">{activeMerchant.name}</strong> ({activeMerchant.businessName})</span>
           </div>
-          <button
-            onClick={onClose}
-            className="px-5 py-2 bg-slate-900 dark:bg-slate-800 hover:bg-slate-800 text-white font-bold rounded-xl transition-colors cursor-pointer"
-          >
-            Close Hub
-          </button>
+          <div className="flex items-center gap-2">
+            {onNavigateToMCP && (
+              <button
+                onClick={() => {
+                  onClose();
+                  onNavigateToMCP();
+                }}
+                className="px-3.5 py-2 bg-sky-50 dark:bg-sky-950/60 hover:bg-sky-100 text-sky-800 dark:text-sky-300 font-bold rounded-xl border border-sky-200 dark:border-sky-800 transition-colors cursor-pointer flex items-center gap-1.5"
+              >
+                <Terminal className="w-3.5 h-3.5" />
+                <span>MCP Gateway ↗</span>
+              </button>
+            )}
+            <button
+              onClick={onClose}
+              className="px-5 py-2 bg-slate-900 dark:bg-slate-800 hover:bg-slate-800 text-white font-bold rounded-xl transition-colors cursor-pointer"
+            >
+              Close
+            </button>
+          </div>
         </div>
 
       </div>
