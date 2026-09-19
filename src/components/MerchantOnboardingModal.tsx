@@ -438,7 +438,7 @@ export const MerchantOnboardingModal: React.FC<MerchantOnboardingModalProps> = (
             {/* Monthly Sales Slider */}
             <div>
               <div className="flex items-center justify-between text-xs mb-1">
-                <span className="text-slate-400">Monthly UPI / Cash Sales</span>
+                <span className="text-slate-400">Monthly UPI / Cash Turnover</span>
                 <span className="font-bold text-emerald-400 text-sm">
                   ₹{monthlySales.toLocaleString('en-IN')}
                 </span>
@@ -446,7 +446,7 @@ export const MerchantOnboardingModal: React.FC<MerchantOnboardingModalProps> = (
               <input
                 type="range"
                 min="30000"
-                max="500000"
+                max="1000000"
                 step="10000"
                 value={monthlySales}
                 onChange={(e) => setMonthlySales(parseInt(e.target.value, 10))}
@@ -454,8 +454,8 @@ export const MerchantOnboardingModal: React.FC<MerchantOnboardingModalProps> = (
               />
               <div className="flex justify-between text-[10px] text-slate-400 mt-0.5">
                 <span>₹30,000</span>
-                <span>₹2,50,000</span>
                 <span>₹5,00,000</span>
+                <span>₹10,00,000</span>
               </div>
             </div>
 
@@ -483,7 +483,7 @@ export const MerchantOnboardingModal: React.FC<MerchantOnboardingModalProps> = (
                 <input
                   type="range"
                   min="0"
-                  max="30000"
+                  max="50000"
                   step="1000"
                   value={existingEMI}
                   onChange={(e) => setExistingEMI(parseInt(e.target.value, 10))}
@@ -495,15 +495,15 @@ export const MerchantOnboardingModal: React.FC<MerchantOnboardingModalProps> = (
             {/* Real-time calculated credit preview */}
             <div className="bg-slate-900/80 p-3 rounded-xl border border-slate-700/60 flex items-center justify-between text-xs">
               <div>
-                <span className="text-slate-400 block">Estimated Surplus Cashflow</span>
+                <span className="text-slate-400 block">Monthly Repayment Capacity</span>
                 <span className="font-semibold text-slate-200">
-                  ₹{Math.round(monthlySales * 0.45).toLocaleString('en-IN')} / mo
+                  ₹{Math.max(0, Math.round(monthlySales * 0.30 - existingEMI)).toLocaleString('en-IN')} / mo
                 </span>
               </div>
               <div className="text-right">
                 <span className="text-slate-400 block">Instant Working Capital Limit</span>
                 <span className="font-bold text-emerald-400">
-                  Up to ₹{Math.min(300000, Math.round(monthlySales * 1.2)).toLocaleString('en-IN')}
+                  Up to ₹{Math.min(500000, Math.max(15000, Math.round(monthlySales * 2.0))).toLocaleString('en-IN')}
                 </span>
               </div>
             </div>

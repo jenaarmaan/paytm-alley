@@ -16,6 +16,7 @@ import { AdminDashboardView } from './components/AdminDashboardView';
 import { EnterpriseIntegrationsView } from './components/EnterpriseIntegrationsView';
 import { LandingPageView } from './components/LandingPageView';
 import { EmbeddedInsuranceView } from './components/EmbeddedInsuranceView';
+import { FederatedSecurityConsole } from './components/FederatedSecurityConsole';
 import { CapitalFlowModal } from './components/CapitalFlowModal';
 import { TrustModal } from './components/TrustModal';
 import { PersonaPerspectiveBar } from './components/PersonaPerspectiveBar';
@@ -591,6 +592,7 @@ export function App() {
                 prev.map((a) => (a.applicationId === appId ? { ...a, status } : a))
               );
             }}
+            onNavigateToFederated={() => setCurrentView('federated-security')}
           />
         )}
 
@@ -599,6 +601,11 @@ export function App() {
           <EnterpriseIntegrationsView
             onOpenCapitalFlow={() => setIsCapitalFlowModalOpen(true)}
           />
+        )}
+
+        {/* VIEW 9: ZERO-KNOWLEDGE FEDERATED LEARNING & CYBERSECURITY */}
+        {currentView === 'federated-security' && (
+          <FederatedSecurityConsole />
         )}
       </main>
 
@@ -684,6 +691,9 @@ export function App() {
             </button>
             <button onClick={() => setCurrentView('insurance')} className="hover:text-slate-900 dark:hover:text-white transition-colors">
               Sachet Insurance
+            </button>
+            <button onClick={() => setCurrentView('federated-security')} className="hover:text-slate-900 dark:hover:text-white transition-colors text-indigo-600 dark:text-indigo-400 font-bold">
+              🛡️ Zero-Knowledge AI
             </button>
             <button onClick={() => setCurrentView('enterprise-integrations')} className="hover:text-slate-900 dark:hover:text-white transition-colors">
               MCP Tools

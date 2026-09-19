@@ -5,11 +5,13 @@ import {
   CreditCard,
   TrendingUp,
   Shield,
+  ShieldCheck,
   Layers,
   Menu,
   X,
   Store,
   ChevronRight,
+  UserPlus,
 } from 'lucide-react';
 import { Merchant, SupportedLanguage } from '../types';
 
@@ -19,6 +21,7 @@ interface NavbarProps {
   activeMerchant: Merchant;
   language: SupportedLanguage;
   onOpenCapitalFlow?: () => void;
+  onOpenOnboarding?: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -27,16 +30,19 @@ export const Navbar: React.FC<NavbarProps> = ({
   activeMerchant,
   language,
   onOpenCapitalFlow,
+  onOpenOnboarding,
 }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const navItems = [
     { id: 'landing', label: 'Overview', icon: Store },
+    { id: 'merchant-onboarding', label: 'Onboard', icon: UserPlus, badge: 'Instant' },
     { id: 'merchant-dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'merchant-voice', label: 'Voice Loan', icon: Mic, highlight: true },
     { id: 'insurance', label: 'Sachet Insurance', icon: Shield, badge: '₹3/d' },
     { id: 'merchant-loans', label: 'My Loans', icon: CreditCard },
     { id: 'merchant-health', label: 'Business Health', icon: TrendingUp },
+    { id: 'federated-security', label: 'Privacy & FedAI', icon: ShieldCheck, badge: 'ZKP' },
     { id: 'admin-dashboard', label: 'Lender Portal', icon: Shield },
     { id: 'enterprise-integrations', label: 'API & MCP', icon: Layers },
   ];
@@ -86,7 +92,7 @@ export const Navbar: React.FC<NavbarProps> = ({
         </div>
 
         {/* Desktop Navigation Links */}
-        <nav className="hidden md:flex items-center gap-1">
+        <nav className="hidden xl:flex items-center gap-1">
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = currentView === item.id;
@@ -95,7 +101,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 key={item.id}
                 id={`nav-${item.id}`}
                 onClick={() => onNavigate(item.id)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                   isActive
                     ? 'bg-slate-900 text-white shadow-sm'
                     : item.highlight
@@ -110,12 +116,28 @@ export const Navbar: React.FC<NavbarProps> = ({
           })}
         </nav>
 
-        {/* Merchant Active Profile Badge & Capital Flow Trigger */}
-        <div className="hidden lg:flex items-center gap-3 pl-3 border-l border-slate-200">
+        {/* Prominent Onboard Button & Merchant Profile Badge */}
+        <div className="hidden md:flex items-center gap-2.5 pl-2 border-l border-slate-200">
+          <button
+            id="btn-navbar-onboard-merchant"
+            onClick={() => {
+              if (onOpenOnboarding) {
+                onOpenOnboarding();
+              } else {
+                onNavigate('merchant-onboarding');
+              }
+            }}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-bold shadow-sm shadow-emerald-600/20 transition-all hover:scale-105 active:scale-95 cursor-pointer"
+            title="Onboard a new merchant profile in 60 seconds"
+          >
+            <UserPlus className="w-3.5 h-3.5" />
+            <span>+ Onboard New Merchant</span>
+          </button>
+
           {onOpenCapitalFlow && (
             <button
               onClick={onOpenCapitalFlow}
-              className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-slate-200 hover:border-slate-300 text-[11px] font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
+              className="hidden lg:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-slate-200 hover:border-slate-300 text-[11px] font-semibold text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer"
               title="View RBI-compliant capital flow and fund routing architecture"
             >
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
@@ -123,7 +145,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             </button>
           )}
 
-          <div className="text-right">
+          <div className="text-right hidden lg:block">
             <div className="text-xs font-bold text-slate-900">{activeMerchant.businessName}</div>
             <div className="text-[11px] text-slate-500 flex items-center justify-end gap-1">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>

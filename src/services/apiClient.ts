@@ -29,9 +29,20 @@ import {
 export class ApiClient {
   private baseUrl = '/api';
   private merchantsRegistry: Record<string, Merchant> = { ...SEEDED_MERCHANTS };
+  private activeLoansRegistry: Record<string, ActiveLoan> = { [SEEDED_ACTIVE_LOAN.merchantId]: SEEDED_ACTIVE_LOAN };
 
-  public registerMerchant(merchant: Merchant) {
+  public async registerMerchant(merchant: Merchant): Promise<Merchant> {
     this.merchantsRegistry[merchant.merchantId] = merchant;
+    try {
+      await fetch(`${this.baseUrl}/merchants`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(merchant),
+      });
+    } catch (e) {
+      // client memory fallback is sufficient
+    }
+    return merchant;
   }
 
   public getMerchant(merchantId: string): Merchant {

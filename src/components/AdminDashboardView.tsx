@@ -30,6 +30,7 @@ import {
   Layers,
   Check,
   RefreshCw,
+  ShieldCheck,
 } from 'lucide-react';
 import { LoanApplication } from '../types';
 import { SEEDED_ADMIN_METRICS } from '../data/seedData';
@@ -39,12 +40,14 @@ interface AdminDashboardViewProps {
   applications: LoanApplication[];
   selectedAppId?: string | null;
   onUpdateStatus: (applicationId: string, status: LoanApplication['status']) => void;
+  onNavigateToFederated?: () => void;
 }
 
 export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
   applications,
   selectedAppId: initialSelectedAppId,
   onUpdateStatus,
+  onNavigateToFederated,
 }) => {
   const [selectedAppId, setSelectedAppId] = useState<string | null>(
     initialSelectedAppId || (applications[0]?.applicationId || null)
@@ -121,7 +124,17 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2.5 flex-wrap">
+          {onNavigateToFederated && (
+            <button
+              onClick={onNavigateToFederated}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-xs font-bold text-indigo-800 transition-colors cursor-pointer"
+            >
+              <ShieldCheck className="w-4 h-4 text-indigo-600" />
+              <span>Zero-Knowledge FedAI Console &rarr;</span>
+            </button>
+          )}
+
           <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200 text-xs font-bold text-emerald-800">
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
             72% Instant Auto-Approval Rate

@@ -43,6 +43,11 @@ class MockLenderService {
     this.activeLoans.set(SEEDED_ACTIVE_LOAN.merchantId, { ...SEEDED_ACTIVE_LOAN });
   }
 
+  public registerMerchant(merchant: Merchant): Merchant {
+    this.merchants.set(merchant.merchantId, { ...merchant });
+    return merchant;
+  }
+
   public getMerchant(merchantId: string): Merchant | null {
     return this.merchants.get(merchantId) || null;
   }
@@ -192,6 +197,42 @@ class MockLenderService {
       app.timeline[3].completed = true;
       app.timeline[4].completed = true;
       app.timeline[4].current = false;
+
+      // Create or update ActiveLoan facility for this merchant
+      const dailyDeduction = Math.round(app.monthlyEMI / 30);
+      const merchant = this.getMerchant(app.merchantId);
+      const dailySales = Math.max(1000, Math.round((merchant?.monthlySales || 120000) / 30));
+      const qrSplit = Math.min(15, Math.max(5, Math.round((dailyDeduction / dailySales) * 100)));
+
+      const activeLoan: ActiveLoan = {
+        loanId: `LN-2026-${app.applicationId.replace('VL-2026-', '')}`,
+        merchantId: app.merchantId,
+        sanctionedAmount: app.approvedAmount,
+        outstandingPrincipal: app.approvedAmount,
+        tenureMonths: app.tenureMonths,
+        monthlyEMI: app.monthlyEMI,
+        annualInterestRate: app.interestRate,
+        disbursalDate: new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }),
+        nextDueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }),
+        paidInstallmentsCount: 0,
+        totalInstallmentsCount: app.tenureMonths,
+        status: 'Active',
+        lenderName: 'Samriddhi Microfinance Bank Ltd',
+        repaymentMode: 'Daily Auto-Split',
+        dailyQrSplitPercent: qrSplit,
+        dailyDeductionAmount: dailyDeduction,
+        dailySettlementHistory: [
+          { date: 'Today (Live)', totalQrVolume: dailySales, autoSplitDeducted: dailyDeduction, netMerchantPayout: dailySales - dailyDeduction, status: 'Settled' },
+        ],
+        repaymentSchedule: Array.from({ length: app.tenureMonths }, (_, i) => ({
+          installmentNo: i + 1,
+          dueDate: new Date(Date.now() + (i + 1) * 30 * 24 * 60 * 60 * 1000).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }),
+          emiAmount: app.monthlyEMI,
+          status: 'Upcoming' as const,
+        })),
+      };
+
+      this.activeLoans.set(app.merchantId, activeLoan);
     }
 
     this.applications.set(applicationId, app);

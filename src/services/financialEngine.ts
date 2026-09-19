@@ -9,20 +9,38 @@ import {
 } from '../types';
 
 export const DEFAULT_UNDERWRITING_CONFIG: UnderwritingConfig = {
-  maxDebtServiceRatio: 0.30, // 30% of monthly cashflow available for debt servicing
-  maxLoanToCashflowMultiplier: 2.0, // Cap at 2x monthly cashflow or 3x depending on stability
+  maxDebtServiceRatio: 0.30, // 30% of monthly sales/cashflow available for debt servicing
+  maxLoanToCashflowMultiplier: 2.0, // Cap at 2x monthly sales
   minimumBusinessVintageMonths: 12, // 1 year minimum vintage
   minimumRepaymentScore: 60, // 60/100 threshold
-  annualInterestRate: 18.0, // 18% per annum (1.5% per month)
+  annualInterestRate: 16.0, // Base 16% per annum
   processingFeePercent: 1.5, // 1.5% one-time fee
   gstPercent: 18.0, // 18% GST on processing fee
 };
 
 /**
+ * Calculates dynamic interest rate formulated from merchant vintage and cashflow risk:
+ * - Base Rate: 16% p.a.
+ * - Vintage Discount: -1.5% if vintage >= 24 months
+ * - Cashflow Volatility Adjustment: +1.0% if existing EMIs > 20% of sales
+ */
+export function calculateDynamicInterestRate(merchant: Merchant): number {
+  let rate = 16.0;
+  if (merchant.businessVintageMonths >= 24) {
+    rate -= 1.5;
+  }
+  const monthlyTurnover = merchant.monthlySales || merchant.monthlyCashflow || 100000;
+  if ((merchant.existingEMI / monthlyTurnover) > 0.20) {
+    rate += 1.0;
+  }
+  return Number(rate.toFixed(1));
+}
+
+/**
  * Deterministic calculation of Monthly Equated Installment (EMI)
  * Formula: P * r * (1+r)^n / ((1+r)^n - 1)
  * @param principal Loan amount in INR
- * @param annualRatePercent Annual interest rate e.g. 18 for 18%
+ * @param annualRatePercent Annual interest rate e.g. 16 for 16%
  * @param tenureMonths Loan duration in months e.g. 12
  */
 export function calculateEMI(
@@ -41,41 +59,46 @@ export function calculateEMI(
 
 /**
  * Calculates net available monthly capacity for additional loan EMI
+ * Formula: Max Monthly EMI Capacity = (Merchant Monthly Sales * 0.30) - Existing EMIs
  */
 export function calculateRepaymentCapacity(
   merchant: Merchant,
   config: UnderwritingConfig = DEFAULT_UNDERWRITING_CONFIG
 ): number {
-  const allowedTotalDebtObligation = merchant.monthlyCashflow * config.maxDebtServiceRatio;
+  const sales = merchant.monthlySales || merchant.monthlyCashflow || 100000;
+  const ratio = config.maxDebtServiceRatio || 0.30;
+  const allowedTotalDebtObligation = sales * ratio;
   const netSurplusForNewLoan = Math.max(0, allowedTotalDebtObligation - merchant.existingEMI);
   return Math.round(netSurplusForNewLoan);
 }
 
 /**
- * Calculates max allowable loan amount based on cashflow constraints and multiplier caps
+ * Calculates dynamic loan sanction range based on merchant's live sales:
+ * - Min Amount = max(₹15,000, Monthly Sales * 0.25)
+ * - Max Amount = min(₹5,00,000, Monthly Sales * 2.0)
  */
 export function calculateMaxLoanAmount(
   merchant: Merchant,
   tenureMonths: number = 12,
   config: UnderwritingConfig = DEFAULT_UNDERWRITING_CONFIG
 ): number {
+  const sales = merchant.monthlySales || merchant.monthlyCashflow || 100000;
   const netMonthlyCapacity = calculateRepaymentCapacity(merchant, config);
+  const rate = calculateDynamicInterestRate(merchant);
 
-  // Maximum loan based on repayment capacity over tenure:
-  // Approximate present value of net monthly capacity at interest rate
-  const monthlyRate = config.annualInterestRate / 12 / 100;
+  // Maximum loan based on capacity
+  const monthlyRate = rate / 12 / 100;
   const factor = Math.pow(1 + monthlyRate, tenureMonths);
   const capacityBasedPrincipal = (netMonthlyCapacity * (factor - 1)) / (monthlyRate * factor);
 
-  // Multiplier ceiling based on monthly cashflow (e.g. 2.0x cashflow)
-  const multiplierMultiplier = merchant.repaymentHistory === 'excellent' ? 2.2 : 2.0;
-  const cashflowCeiling = merchant.monthlyCashflow * multiplierMultiplier;
+  // Policy ceiling based on sales (max 2.0x monthly sales, capped at ₹5,00,000)
+  const salesCeiling = Math.min(500000, sales * 2.0);
 
-  // Final max is the minimum of capacity-derived and policy ceiling
-  const rawMax = Math.min(capacityBasedPrincipal, cashflowCeiling);
+  // Minimum of capacity-derived and sales policy ceiling
+  const rawMax = Math.min(capacityBasedPrincipal, salesCeiling);
 
   // Round to nearest ₹5,000
-  return Math.floor(rawMax / 5000) * 5000;
+  return Math.max(15000, Math.floor(rawMax / 5000) * 5000);
 }
 
 /**
@@ -87,15 +110,17 @@ export function calculateEligibility(
   tenureMonths: number = 12,
   config: UnderwritingConfig = DEFAULT_UNDERWRITING_CONFIG
 ): EligibilityResult {
+  const sales = merchant.monthlySales || merchant.monthlyCashflow || 100000;
   const maxRepaymentCapacity = calculateRepaymentCapacity(merchant, config);
   const maxEligible = calculateMaxLoanAmount(merchant, tenureMonths, config);
-  const minEligible = Math.min(25000, Math.floor((maxEligible * 0.4) / 5000) * 5000);
+  const minEligible = Math.max(15000, Math.round(sales * 0.25));
+  const dynamicRate = calculateDynamicInterestRate(merchant);
 
   // Rule verification
   const vintagePassed = merchant.businessVintageMonths >= config.minimumBusinessVintageMonths;
   const repaymentPassed = merchant.repaymentHistory !== 'poor';
   const digitalPassed = merchant.digitalTransactionScore >= config.minimumRepaymentScore;
-  const capacityPassed = maxRepaymentCapacity >= 4000;
+  const capacityPassed = maxRepaymentCapacity >= 3000;
 
   const ruleTriggers = [
     {
@@ -104,7 +129,7 @@ export function calculateEligibility(
       detail: `${(merchant.businessVintageMonths / 12).toFixed(1)} years operational (Policy: >= ${(config.minimumBusinessVintageMonths / 12).toFixed(0)} year)`,
     },
     {
-      ruleName: 'Debt-to-Cashflow Ratio Check',
+      ruleName: 'Debt-to-Sales Capacity Check',
       passed: capacityPassed,
       detail: `Net available monthly headroom: ₹${maxRepaymentCapacity.toLocaleString('en-IN')} after existing EMI ₹${merchant.existingEMI.toLocaleString('en-IN')}`,
     },
@@ -130,37 +155,37 @@ export function calculateEligibility(
   // Round to ₹5,000 increments
   recommendedAmount = Math.round(recommendedAmount / 5000) * 5000;
 
-  const currentDebtRatio = (merchant.existingEMI / merchant.monthlyCashflow) * 100;
+  const currentDebtRatio = ((merchant.existingEMI / sales) * 100);
 
   const factors: FactorBreakdown[] = [
     {
-      label: 'Cashflow Capacity',
+      label: 'Monthly Cashflow Capacity',
       score: Math.min(10, Math.round((maxRepaymentCapacity / 20000) * 10)),
       rating: maxRepaymentCapacity > 12000 ? 'Strong' : 'Good',
-      description: `Monthly cash flow of ₹${merchant.monthlyCashflow.toLocaleString('en-IN')} easily covers simulated EMI`,
+      description: `Monthly turnover of ₹${sales.toLocaleString('en-IN')} provides ₹${maxRepaymentCapacity.toLocaleString('en-IN')}/mo headroom`,
     },
     {
       label: 'Existing Obligations',
       score: Math.max(2, 10 - Math.round((currentDebtRatio / 30) * 10)),
       rating: currentDebtRatio < 15 ? 'Optimal' : 'Good',
-      description: `Current EMI of ₹${merchant.existingEMI.toLocaleString('en-IN')} represents ${currentDebtRatio.toFixed(1)}% of net cashflow`,
+      description: `Current EMI of ₹${merchant.existingEMI.toLocaleString('en-IN')} represents ${currentDebtRatio.toFixed(1)}% of monthly turnover`,
     },
     {
       label: 'Business Stability',
       score: Math.min(10, Math.round((merchant.businessVintageMonths / 48) * 10)),
-      rating: merchant.businessVintageMonths >= 36 ? 'Strong' : 'Good',
+      rating: merchant.businessVintageMonths >= 24 ? 'Strong' : 'Good',
       description: `${(merchant.businessVintageMonths / 12).toFixed(1)} years continuous operations in ${merchant.location}`,
     },
     {
       label: 'Repayment Discipline',
       score: merchant.repaymentHistory === 'excellent' ? 10 : merchant.repaymentHistory === 'good' ? 8 : 5,
       rating: merchant.repaymentHistory === 'excellent' ? 'Optimal' : 'Good',
-      description: 'Zero defaults on commercial UPI settlements and micro-distributor invoices',
+      description: `Dynamic interest rate formulated at ${dynamicRate}% p.a. based on vintage and debt profile`,
     },
   ];
 
   const explanationSummary = isEligible
-    ? `Based on ${merchant.businessName}'s ${(merchant.businessVintageMonths / 12).toFixed(1)}-year operating history and net monthly cashflow of ₹${merchant.monthlyCashflow.toLocaleString('en-IN')}, you qualify for a simulated working capital credit offer up to ₹${maxEligible.toLocaleString('en-IN')}.`
+    ? `Based on ${merchant.businessName}'s ${(merchant.businessVintageMonths / 12).toFixed(1)}-year operating history and monthly turnover of ₹${sales.toLocaleString('en-IN')}, you qualify for a working capital credit offer up to ₹${maxEligible.toLocaleString('en-IN')} at ${dynamicRate}% p.a.`
     : `Application cannot proceed automatically because cashflow headroom is insufficient or minimum business vintage criteria were not met.`;
 
   return {
@@ -189,13 +214,14 @@ export function generateLoanOffer(
   repaymentFrequency: 'monthly' | 'daily' = 'daily',
   bundledInsurance: InsuranceProduct[] = []
 ): LoanOffer {
-  const monthlyEMI = calculateEMI(sanctionedAmount, config.annualInterestRate, tenureMonths);
+  const effectiveRate = calculateDynamicInterestRate(merchant);
+  const monthlyEMI = calculateEMI(sanctionedAmount, effectiveRate, tenureMonths);
   const totalRepaymentAmount = monthlyEMI * tenureMonths;
   const totalInterestPayable = Math.max(0, totalRepaymentAmount - sanctionedAmount);
 
   // Daily auto-split math: 30 days per month
   const dailyDeductionAmount = Math.round(monthlyEMI / 30);
-  const dailyAvgSales = Math.max(1000, Math.round(merchant.monthlySales / 30));
+  const dailyAvgSales = Math.max(1000, Math.round((merchant.monthlySales || 100000) / 30));
   const rawQrSplit = (dailyDeductionAmount / dailyAvgSales) * 100;
   const qrSplitPercentage = Math.min(15, Math.max(5, Math.round(rawQrSplit)));
 
@@ -206,7 +232,7 @@ export function generateLoanOffer(
   // Approximate APR
   const aprPercent = Number(
     (
-      config.annualInterestRate +
+      effectiveRate +
       ((processingFee + gstOnProcessingFee) / sanctionedAmount) * (12 / tenureMonths) * 100
     ).toFixed(2)
   );
@@ -216,7 +242,7 @@ export function generateLoanOffer(
     merchantId: merchant.merchantId,
     loanAmount: sanctionedAmount,
     tenureMonths,
-    annualInterestRate: config.annualInterestRate,
+    annualInterestRate: effectiveRate,
     monthlyEMI,
     repaymentFrequency,
     dailyDeductionAmount,
@@ -228,7 +254,7 @@ export function generateLoanOffer(
     totalRepaymentAmount,
     aprPercent,
     bundledInsurance,
-    disclaimer: 'Simulated offer generated by VoiceLend deterministic underwriting engine for demonstration.',
+    disclaimer: 'Calculated by VoiceLend deterministic underwriting engine based on live merchant telemetry.',
     createdAt: new Date().toISOString(),
   };
 }

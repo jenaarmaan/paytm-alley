@@ -150,6 +150,15 @@ apiRouter.get('/merchants', (req: Request, res: Response) => {
   return sendSuccess(res, merchants);
 });
 
+apiRouter.post('/merchants', (req: Request, res: Response) => {
+  const merchant = req.body;
+  if (!merchant || !merchant.merchantId || !merchant.name) {
+    return sendError(res, 'INVALID_MERCHANT', 'Valid merchant object is required');
+  }
+  const registered = mockLenderService.registerMerchant(merchant);
+  return sendSuccess(res, registered);
+});
+
 apiRouter.get('/merchants/:id', (req: Request, res: Response) => {
   const merchant = mockLenderService.getMerchant(req.params.id);
   if (!merchant) return sendError(res, 'MERCHANT_NOT_FOUND', 'Merchant not found', 404);
