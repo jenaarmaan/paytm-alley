@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   Mic,
   LayoutDashboard,
@@ -17,7 +17,10 @@ import {
   Volume2,
   VolumeX,
   Sparkles,
-  BadgeCheck
+  BadgeCheck,
+  LogIn,
+  LogOut,
+  User
 } from 'lucide-react';
 import { Merchant, SupportedLanguage } from '../types';
 
@@ -26,6 +29,9 @@ interface NavbarProps {
   onNavigate: (view: string) => void;
   activeMerchant: Merchant;
   language: SupportedLanguage;
+  isAuthenticated?: boolean;
+  onOpenAuth?: (mode?: 'login' | 'register' | 'otp') => void;
+  onLogout?: () => void;
   onOpenCapitalFlow?: () => void;
   onOpenOnboarding?: () => void;
   onOpenDocsAndSettings?: (tab?: 'personas' | 'settings' | 'documentation' | 'rails') => void;
@@ -38,6 +44,9 @@ export const Navbar: React.FC<NavbarProps> = ({
   onNavigate,
   activeMerchant,
   language,
+  isAuthenticated = true,
+  onOpenAuth,
+  onLogout,
   onOpenCapitalFlow,
   onOpenOnboarding,
   onOpenDocsAndSettings,
@@ -45,6 +54,19 @@ export const Navbar: React.FC<NavbarProps> = ({
   onToggleAutoVoice,
 }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
+  const profileDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close profile dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (profileDropdownRef.current && !profileDropdownRef.current.contains(event.target as Node)) {
+        setProfileDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const primaryNavItems = [
     { id: 'landing', label: 'Overview', icon: Store },
@@ -98,27 +120,87 @@ export const Navbar: React.FC<NavbarProps> = ({
             </div>
           </div>
 
-          {/* Quick Active Persona Switcher Pill */}
-          <button
-            id="btn-navbar-switch-persona"
-            onClick={() => onOpenDocsAndSettings?.('personas')}
-            className="hidden sm:flex items-center gap-2 px-2.5 py-1 rounded-xl bg-slate-100 hover:bg-slate-200/80 dark:bg-slate-800 dark:hover:bg-slate-700/80 border border-slate-200/80 dark:border-slate-700 text-left transition-all cursor-pointer group"
-            title="Click to switch active demo merchant profile"
-          >
-            <div className="w-6 h-6 rounded-lg bg-gradient-to-tr from-indigo-600 to-emerald-500 text-white flex items-center justify-center font-bold text-[10px] shadow-xs">
-              {activeMerchant.name.split(' ').map((n) => n[0]).join('').slice(0, 2)}
+          {/* Quick Active Persona Switcher Pill (when authenticated) */}
+          {isAuthenticated ? (
+            <div className="relative" ref={profileDropdownRef}>
+              <button
+                id="btn-navbar-switch-persona"
+                onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
+                className="hidden sm:flex items-center gap-2 px-2.5 py-1 rounded-xl bg-slate-100 hover:bg-slate-200/80 dark:bg-slate-800 dark:hover:bg-slate-700/80 border border-slate-200/80 dark:border-slate-700 text-left transition-all cursor-pointer group"
+                title="Account Menu & Profile Details"
+              >
+                <div className="w-6 h-6 rounded-lg bg-gradient-to-tr from-indigo-600 to-emerald-500 text-white flex items-center justify-center font-bold text-[10px] shadow-xs">
+                  {activeMerchant.name.split(' ').map((n) => n[0]).join('').slice(0, 2)}
+                </div>
+                <div className="hidden lg:block leading-tight">
+                  <div className="text-[11px] font-bold text-slate-900 dark:text-white flex items-center gap-1">
+                    <span className="truncate max-w-[100px]">{activeMerchant.name}</span>
+                    <BadgeCheck className="w-3 h-3 text-sky-500 shrink-0" />
+                  </div>
+                  <div className="text-[9px] text-slate-500 dark:text-slate-400 truncate max-w-[100px]">
+                    {activeMerchant.businessName}
+                  </div>
+                </div>
+                <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform ${profileDropdownOpen ? 'rotate-180 text-slate-700 dark:text-slate-200' : 'group-hover:text-slate-700 dark:group-hover:text-slate-200'}`} />
+              </button>
+
+              {/* Profile Dropdown Menu */}
+              {profileDropdownOpen && (
+                <div className="absolute left-0 mt-2 w-64 bg-white dark:bg-slate-900 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
+                  <div className="px-4 py-2 border-b border-slate-100 dark:border-slate-800">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Active Merchant Session</p>
+                    <p className="text-xs font-bold text-slate-900 dark:text-white mt-0.5">{activeMerchant.name}</p>
+                    <p className="text-[11px] text-slate-500 truncate">{activeMerchant.businessName} • {activeMerchant.location}</p>
+                  </div>
+
+                  <div className="p-1.5 space-y-1 text-xs">
+                    <button
+                      onClick={() => {
+                        setProfileDropdownOpen(false);
+                        onOpenAuth?.('login');
+                      }}
+                      className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 font-medium text-left cursor-pointer"
+                    >
+                      <User className="w-4 h-4 text-indigo-500" />
+                      <span>Switch Account Profile</span>
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        setProfileDropdownOpen(false);
+                        onOpenAuth?.('register');
+                      }}
+                      className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 font-medium text-left cursor-pointer"
+                    >
+                      <UserPlus className="w-4 h-4 text-emerald-500" />
+                      <span>+ Register New Merchant</span>
+                    </button>
+
+                    <div className="border-t border-slate-100 dark:border-slate-800 my-1"></div>
+
+                    <button
+                      onClick={() => {
+                        setProfileDropdownOpen(false);
+                        onLogout?.();
+                      }}
+                      className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 font-bold text-left cursor-pointer"
+                    >
+                      <LogOut className="w-4 h-4" />
+                      <span>Log Out Session</span>
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
-            <div className="hidden lg:block leading-tight">
-              <div className="text-[11px] font-bold text-slate-900 dark:text-white flex items-center gap-1">
-                <span className="truncate max-w-[100px]">{activeMerchant.name}</span>
-                <BadgeCheck className="w-3 h-3 text-sky-500 shrink-0" />
-              </div>
-              <div className="text-[9px] text-slate-500 dark:text-slate-400 truncate max-w-[100px]">
-                {activeMerchant.businessName}
-              </div>
-            </div>
-            <ChevronDown className="w-3.5 h-3.5 text-slate-400 group-hover:text-slate-700 dark:group-hover:text-slate-200 transition-transform" />
-          </button>
+          ) : (
+            <button
+              onClick={() => onOpenAuth?.('login')}
+              className="hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 text-xs font-bold transition-all cursor-pointer"
+            >
+              <LogIn className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+              <span>Log In</span>
+            </button>
+          )}
         </div>
 
         {/* Center: Clean Desktop Navigation Links */}
@@ -151,7 +233,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           })}
         </nav>
 
-        {/* Right: Actions, Docs & Settings, Onboard Button */}
+        {/* Right: Actions, Docs & Settings, Onboard/Logout Button */}
         <div className="flex items-center gap-2 shrink-0">
           
           {/* Docs & Demo Hub Trigger Button */}
@@ -162,7 +244,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             title="Open Documentation, Architecture & Demo Personas Hub"
           >
             <BookOpen className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
-            <span className="hidden sm:inline">Docs &amp; Demo Hub</span>
+            <span className="hidden sm:inline">Docs &amp; Specs</span>
           </button>
 
           {/* Settings Trigger Button */}
@@ -190,23 +272,46 @@ export const Navbar: React.FC<NavbarProps> = ({
             </button>
           )}
 
-          {/* + Onboard Button */}
-          <button
-            id="btn-navbar-onboard-merchant"
-            onClick={() => {
-              if (onOpenOnboarding) {
-                onOpenOnboarding();
-              } else {
-                onNavigate('merchant-onboarding');
-              }
-            }}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-extrabold shadow-sm shadow-emerald-600/20 transition-all hover:scale-105 active:scale-95 cursor-pointer"
-            title="Onboard a new merchant profile in 60 seconds"
-          >
-            <UserPlus className="w-3.5 h-3.5" />
-            <span className="hidden md:inline">+ Onboard New Merchant</span>
-            <span className="md:hidden">+ Onboard</span>
-          </button>
+          {/* Login or + Onboard Button */}
+          {isAuthenticated ? (
+            <div className="flex items-center gap-1.5">
+              <button
+                id="btn-navbar-onboard-merchant"
+                onClick={() => {
+                  if (onOpenAuth) {
+                    onOpenAuth('register');
+                  } else if (onOpenOnboarding) {
+                    onOpenOnboarding();
+                  } else {
+                    onNavigate('merchant-onboarding');
+                  }
+                }}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-extrabold shadow-sm shadow-emerald-600/20 transition-all hover:scale-105 active:scale-95 cursor-pointer"
+                title="Onboard a new merchant profile in 60 seconds"
+              >
+                <UserPlus className="w-3.5 h-3.5" />
+                <span className="hidden md:inline">+ Onboard New</span>
+                <span className="md:hidden">+ Onboard</span>
+              </button>
+
+              <button
+                onClick={onLogout}
+                className="hidden sm:flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-bold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50 transition-all cursor-pointer"
+                title="Log Out Session"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+                <span className="hidden md:inline">Log Out</span>
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => onOpenAuth?.('login')}
+              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 text-white text-xs font-extrabold shadow-sm shadow-emerald-600/20 cursor-pointer"
+            >
+              <LogIn className="w-3.5 h-3.5" />
+              <span>Log In</span>
+            </button>
+          )}
 
           {/* Mobile Hamburger Toggle */}
           <button
@@ -220,27 +325,61 @@ export const Navbar: React.FC<NavbarProps> = ({
 
       {/* Mobile Menu Dropdown */}
       {mobileMenuOpen && (
-        <div className="xl:hidden border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-4 py-3 space-y-1 animate-in slide-in-from-top-2 duration-150">
-          <div className="p-2 mb-2 rounded-xl bg-slate-50 dark:bg-slate-800 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-emerald-600 text-white flex items-center justify-center font-bold text-xs">
-                {activeMerchant.name.split(' ').map((n) => n[0]).join('').slice(0, 2)}
+        <div className="xl:hidden border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-4 py-3 space-y-2 animate-in slide-in-from-top-2 duration-150">
+          {isAuthenticated ? (
+            <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 flex items-center justify-between border border-slate-200/80 dark:border-slate-700">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-emerald-600 text-white flex items-center justify-center font-bold text-xs">
+                  {activeMerchant.name.split(' ').map((n) => n[0]).join('').slice(0, 2)}
+                </div>
+                <div>
+                  <div className="text-xs font-bold text-slate-900 dark:text-white">{activeMerchant.name}</div>
+                  <div className="text-[10px] text-slate-500">{activeMerchant.businessName}</div>
+                </div>
               </div>
-              <div>
-                <div className="text-xs font-bold text-slate-900 dark:text-white">{activeMerchant.name}</div>
-                <div className="text-[10px] text-slate-500">{activeMerchant.businessName}</div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    onOpenAuth?.('login');
+                  }}
+                  className="text-xs font-bold text-emerald-600 dark:text-emerald-400 hover:underline"
+                >
+                  Switch
+                </button>
+                <button
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    onLogout?.();
+                  }}
+                  className="text-xs font-bold text-rose-600 dark:text-rose-400 hover:underline"
+                >
+                  Log Out
+                </button>
               </div>
             </div>
-            <button
-              onClick={() => {
-                setMobileMenuOpen(false);
-                onOpenDocsAndSettings?.('personas');
-              }}
-              className="text-xs font-bold text-emerald-600 dark:text-emerald-400 hover:underline"
-            >
-              Switch Profile
-            </button>
-          </div>
+          ) : (
+            <div className="flex gap-2">
+              <button
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  onOpenAuth?.('login');
+                }}
+                className="flex-1 py-2 rounded-xl bg-emerald-600 text-white font-bold text-xs text-center"
+              >
+                Log In
+              </button>
+              <button
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  onOpenAuth?.('register');
+                }}
+                className="flex-1 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 font-bold text-xs text-center"
+              >
+                + Register New
+              </button>
+            </div>
+          )}
 
           <div className="grid grid-cols-2 gap-1">
             {primaryNavItems.map((item) => {
@@ -291,3 +430,4 @@ export const Navbar: React.FC<NavbarProps> = ({
     </header>
   );
 };
+

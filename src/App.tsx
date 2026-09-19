@@ -22,11 +22,13 @@ import { TrustModal } from './components/TrustModal';
 import { PersonaPerspectiveBar } from './components/PersonaPerspectiveBar';
 import { MerchantOnboardingModal } from './components/MerchantOnboardingModal';
 import { MerchantOnboardingView } from './components/MerchantOnboardingView';
+import { AuthModal } from './components/AuthModal';
 import { FloatingAlleyWidget } from './components/FloatingAlleyWidget';
 import { AlleyFlowConsole } from './components/AlleyFlowConsole';
 import { DocumentationAndSettingsModal } from './components/DocumentationAndSettingsModal';
 import { CheckCircle2, Volume2, VolumeX, X } from 'lucide-react';
 import { speechService } from './services/speechService';
+import { authService } from './services/authService';
 import { getVoiceIntentAcknowledgement, getVoiceSubmissionAcknowledgement } from './services/translations';
 
 import {
@@ -53,26 +55,46 @@ import { apiClient } from './services/apiClient';
 import { calculateEligibility, generateLoanOffer, generateKFS } from './services/financialEngine';
 
 export function App() {
+  // Authentication & Persistent Database States
+  const [merchantsMap, setMerchantsMap] = useState<Record<string, Merchant>>(() => authService.getMerchants());
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => authService.isAuthenticated());
+  const [selectedMerchantId, setSelectedMerchantId] = useState<string>(() => {
+    const session = authService.getActiveSession();
+    return session?.merchantId || 'M001';
+  });
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
+  const [authModalMode, setAuthModalMode] = useState<'login' | 'register' | 'otp'>('login');
+
   // Navigation & Profile States
   const [currentView, setCurrentView] = useState<string>('merchant-dashboard');
-  const [merchantsMap, setMerchantsMap] = useState<Record<string, Merchant>>(SEEDED_MERCHANTS);
-  const [selectedMerchantId, setSelectedMerchantId] = useState<string>('M001');
   const [selectedLanguage, setSelectedLanguage] = useState<SupportedLanguage>('Hinglish');
   const [isOnboardingModalOpen, setIsOnboardingModalOpen] = useState<boolean>(false);
 
   // Active Merchant Profile
   const activeMerchant: Merchant = merchantsMap[selectedMerchantId] || Object.values(merchantsMap)[0] || SEEDED_MERCHANTS['M001'];
 
+  // Handle Authentication Success (Login or Registration)
+  const handleAuthSuccess = (merchant: Merchant) => {
+    const updatedMerchants = authService.getMerchants();
+    setMerchantsMap(updatedMerchants);
+    setSelectedMerchantId(merchant.merchantId);
+    setSelectedLanguage(merchant.preferredLanguage);
+    setIsAuthenticated(true);
+    setCurrentView('merchant-dashboard');
+  };
+
+  // Handle Logout
+  const handleLogout = () => {
+    authService.logout();
+    setIsAuthenticated(false);
+    stopVoiceFeedback();
+    setCurrentView('landing');
+  };
+
   // Handle Dynamic Merchant Onboarding
   const handleOnboardMerchant = (newMerchant: Merchant) => {
-    setMerchantsMap((prev) => ({
-      ...prev,
-      [newMerchant.merchantId]: newMerchant,
-    }));
-    apiClient.registerMerchant(newMerchant);
-    setSelectedMerchantId(newMerchant.merchantId);
-    setSelectedLanguage(newMerchant.preferredLanguage);
-    setCurrentView('merchant-dashboard');
+    const registered = authService.registerMerchant(newMerchant);
+    handleAuthSuccess(registered);
   };
 
   // Applications & Active Loans
@@ -412,8 +434,17 @@ export function App() {
         }}
         activeMerchant={activeMerchant}
         language={selectedLanguage}
+        isAuthenticated={isAuthenticated}
+        onOpenAuth={(mode) => {
+          setAuthModalMode(mode || 'login');
+          setIsAuthModalOpen(true);
+        }}
+        onLogout={handleLogout}
         onOpenCapitalFlow={() => setIsCapitalFlowModalOpen(true)}
-        onOpenOnboarding={() => setIsOnboardingModalOpen(true)}
+        onOpenOnboarding={() => {
+          setAuthModalMode('register');
+          setIsAuthModalOpen(true);
+        }}
         onOpenDocsAndSettings={(tab = 'personas') => {
           setDocsSettingsTab(tab);
           setIsDocsSettingsOpen(true);
@@ -808,6 +839,15 @@ export function App() {
           handleStartVoiceLoan(prompt);
         }}
         onOpenCapitalRails={() => setIsCapitalFlowModalOpen(true)}
+      />
+
+      {/* Production-Grade Merchant Authentication Modal (Login / OTP / Register) */}
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        initialMode={authModalMode}
+        onAuthSuccess={handleAuthSuccess}
+        merchants={merchantsMap}
       />
     </div>
   );
