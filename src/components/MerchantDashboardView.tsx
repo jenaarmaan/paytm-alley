@@ -46,15 +46,15 @@ export const MerchantDashboardView: React.FC<MerchantDashboardViewProps> = ({
   return (
     <div id="merchant-dashboard-view" className="space-y-6 animate-in fade-in-50 duration-300">
       {/* Top Greeting & Store Header */}
-      <div className="flex flex-wrap items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200/90 shadow-sm">
+      <div className="flex flex-wrap items-center justify-between gap-3 bg-white p-4 sm:p-6 rounded-2xl border border-slate-200/90 shadow-sm">
         <div>
           <div className="flex items-center gap-2">
-            <span className="text-xs font-bold uppercase tracking-wider text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
               Verified Kirana Store
             </span>
             <span className="text-xs text-slate-400">• {merchant.location}</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-1 tracking-tight">
+          <h1 className="text-xl sm:text-3xl font-extrabold text-slate-900 mt-1 tracking-tight">
             {t.goodMorning}, {merchant.name}
           </h1>
           <p className="text-xs text-slate-500 mt-0.5">
@@ -65,7 +65,7 @@ export const MerchantDashboardView: React.FC<MerchantDashboardViewProps> = ({
         {/* Quick Health Tag */}
         <button
           onClick={onViewBusinessHealth}
-          className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-xs font-semibold text-slate-700 transition-colors"
+          className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-xs font-semibold text-slate-700 transition-colors cursor-pointer"
         >
           <HeartPulse className="w-4 h-4 text-emerald-600" />
           <span>Health: {t.healthy} (87/100)</span>
@@ -74,18 +74,18 @@ export const MerchantDashboardView: React.FC<MerchantDashboardViewProps> = ({
       </div>
 
       {/* Main Hero Voice Call-to-Action Card */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-tr from-slate-900 via-slate-800 to-emerald-900 text-white p-6 sm:p-10 shadow-xl">
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-tr from-slate-900 via-slate-800 to-emerald-900 text-white p-5 sm:p-10 shadow-xl">
         <div className="relative z-10 max-w-2xl">
           <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 mb-3">
             <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
             <span>Pre-Qualified Working Capital Buffer Available</span>
           </span>
 
-          <h2 className="text-3xl sm:text-4xl font-black tracking-tight text-white mb-2">
+          <h2 className="text-2xl sm:text-4xl font-black tracking-tight text-white mb-2">
             {t.askForLoan}
           </h2>
 
-          <p className="text-sm text-slate-300 mb-6 leading-relaxed">
+          <p className="text-xs sm:text-sm text-slate-300 mb-5 leading-relaxed">
             Need inventory stock for the upcoming festive rush, store renovation, or supplier advance? Simply tap and speak in {language}.
           </p>
 
@@ -93,7 +93,7 @@ export const MerchantDashboardView: React.FC<MerchantDashboardViewProps> = ({
             <button
               id="btn-dashboard-start-voice"
               onClick={() => onStartVoiceLoan()}
-              className="inline-flex items-center gap-2.5 px-6 py-3 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-sm shadow-lg shadow-emerald-500/20 transition-all hover:scale-105 active:scale-95"
+              className="inline-flex items-center gap-2.5 px-6 py-3 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-sm shadow-lg shadow-emerald-500/20 transition-all hover:scale-105 active:scale-95 cursor-pointer"
             >
               <Mic className="w-5 h-5" />
               <span>{t.tapToSpeak} ({language})</span>
@@ -104,18 +104,23 @@ export const MerchantDashboardView: React.FC<MerchantDashboardViewProps> = ({
             </span>
           </div>
 
-          {/* Quick preset suggestions */}
-          <div className="mt-6 pt-4 border-t border-slate-700/60 flex flex-wrap items-center gap-2 text-xs">
-            <span className="text-slate-400">Quick Demo Prompts:</span>
-            {DEMO_SCENARIOS.map((sc) => (
-              <button
-                key={sc.id}
-                onClick={() => onStartVoiceLoan(sc.spokenPrompt)}
-                className="px-2.5 py-1 rounded-lg bg-slate-800/90 hover:bg-slate-700 border border-slate-700 text-slate-200 text-[11px] font-medium transition-colors truncate max-w-xs"
-              >
-                "{sc.spokenPrompt}"
-              </button>
-            ))}
+          {/* Quick preset suggestions: Horizontal Swipeable Pill Strip on Mobile */}
+          <div className="mt-5 pt-4 border-t border-slate-700/60 text-xs">
+            <div className="text-slate-400 font-medium mb-2 flex items-center gap-1.5">
+              <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+              <span>Quick Demo Prompts (Swipe to select):</span>
+            </div>
+            <div className="flex items-center gap-2 overflow-x-auto pb-1.5 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+              {DEMO_SCENARIOS.map((sc) => (
+                <button
+                  key={sc.id}
+                  onClick={() => onStartVoiceLoan(sc.spokenPrompt)}
+                  className="shrink-0 px-3 py-1.5 rounded-xl bg-slate-800/90 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs font-medium transition-colors shadow-2xs hover:border-emerald-400/50 cursor-pointer whitespace-nowrap"
+                >
+                  "{sc.spokenPrompt}"
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 

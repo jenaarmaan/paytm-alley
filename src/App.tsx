@@ -757,30 +757,30 @@ export function App() {
       )}
 
       {/* Footer */}
-      <footer className="bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 mt-12 py-6 px-4 text-center text-xs text-slate-500">
-        <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center gap-2 font-medium">
+      <footer className="bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 mt-12 py-6 px-4 text-xs text-slate-500 pb-24 sm:pb-8">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-2 font-medium text-center md:text-left">
             <span className="font-bold text-slate-800 dark:text-slate-200">VoiceLend</span>
             <span>• From Voice to Working Capital &amp; Embedded FinTech</span>
           </div>
 
-          <div className="flex items-center gap-4 text-xs font-semibold">
-            <button onClick={() => setIsCapitalFlowModalOpen(true)} className="hover:text-slate-900 dark:hover:text-white transition-colors text-emerald-600 dark:text-emerald-400">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:flex md:flex-wrap items-center justify-center gap-x-5 gap-y-2.5 text-xs font-semibold w-full md:w-auto text-center">
+            <button onClick={() => setIsCapitalFlowModalOpen(true)} className="hover:text-slate-900 dark:hover:text-white transition-colors text-emerald-600 dark:text-emerald-400 cursor-pointer text-left sm:text-center">
               Capital Rails
             </button>
-            <button onClick={() => setIsTrustModalOpen(true)} className="hover:text-slate-900 dark:hover:text-white transition-colors">
+            <button onClick={() => setIsTrustModalOpen(true)} className="hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer text-left sm:text-center">
               Trust &amp; Architecture
             </button>
-            <button onClick={() => setCurrentView('insurance')} className="hover:text-slate-900 dark:hover:text-white transition-colors">
+            <button onClick={() => setCurrentView('insurance')} className="hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer text-left sm:text-center">
               Sachet Insurance
             </button>
-            <button onClick={() => setCurrentView('federated-security')} className="hover:text-slate-900 dark:hover:text-white transition-colors text-indigo-600 dark:text-indigo-400 font-bold">
+            <button onClick={() => setCurrentView('federated-security')} className="hover:text-slate-900 dark:hover:text-white transition-colors text-indigo-600 dark:text-indigo-400 font-bold cursor-pointer text-left sm:text-center">
               🛡️ Zero-Knowledge AI
             </button>
-            <button onClick={() => setCurrentView('enterprise-integrations')} className="hover:text-slate-900 dark:hover:text-white transition-colors">
+            <button onClick={() => setCurrentView('enterprise-integrations')} className="hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer text-left sm:text-center">
               MCP Tools
             </button>
-            <button onClick={() => setCurrentView('admin-dashboard')} className="hover:text-slate-900 dark:hover:text-white transition-colors">
+            <button onClick={() => setCurrentView('admin-dashboard')} className="hover:text-slate-900 dark:hover:text-white transition-colors cursor-pointer text-left sm:text-center">
               Lender Portal
             </button>
           </div>

@@ -215,24 +215,24 @@ export const Navbar: React.FC<NavbarProps> = ({
         </nav>
 
         {/* Right: Actions, Docs & Settings, Onboard/Logout Button */}
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
           
-          {/* Docs & Specs Trigger Button */}
+          {/* Docs & Specs Trigger Button (Desktop & Tablet) */}
           <button
             id="btn-navbar-docs-hub"
             onClick={() => onOpenDocs?.()}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/60 dark:hover:bg-indigo-900 text-indigo-900 dark:text-indigo-200 border border-indigo-200 dark:border-indigo-800 text-xs font-bold transition-all cursor-pointer shadow-2xs"
+            className="hidden md:flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/60 dark:hover:bg-indigo-900 text-indigo-900 dark:text-indigo-200 border border-indigo-200 dark:border-indigo-800 text-xs font-bold transition-all cursor-pointer shadow-2xs"
             title="Open Architecture & MCP Specifications"
           >
             <BookOpen className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
-            <span className="hidden sm:inline">Docs &amp; Specs</span>
+            <span>Docs &amp; Specs</span>
           </button>
 
-          {/* Settings Trigger Button */}
+          {/* Settings Trigger Button (Desktop & Tablet) */}
           <button
             id="btn-navbar-settings"
             onClick={() => onOpenSettings?.()}
-            className="p-2 rounded-xl text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 transition-colors cursor-pointer"
+            className="hidden md:flex p-2 rounded-xl text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 transition-colors cursor-pointer"
             title="System Settings & Profile"
           >
             <Settings className="w-4 h-4" />
@@ -253,12 +253,12 @@ export const Navbar: React.FC<NavbarProps> = ({
             </button>
           )}
 
-          {/* Login or Log Out Button */}
+          {/* Desktop/Tablet Log In or Log Out Button */}
           {isAuthenticated ? (
             <button
               id="btn-navbar-logout"
               onClick={onLogout}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-rose-600 dark:text-rose-400 bg-rose-50/80 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-900/50 border border-rose-200 dark:border-rose-800 transition-all cursor-pointer shadow-xs"
+              className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-rose-600 dark:text-rose-400 bg-rose-50/80 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-900/50 border border-rose-200 dark:border-rose-800 transition-all cursor-pointer shadow-xs"
               title="Log Out Session"
             >
               <LogOut className="w-3.5 h-3.5" />
@@ -268,7 +268,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             <button
               id="btn-navbar-login"
               onClick={() => onOpenAuth?.('login')}
-              className="flex items-center gap-1.5 px-4 py-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-extrabold shadow-sm shadow-emerald-600/20 transition-all hover:scale-105 active:scale-95 cursor-pointer"
+              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-extrabold shadow-sm shadow-emerald-600/20 transition-all hover:scale-105 active:scale-95 cursor-pointer"
             >
               <LogIn className="w-3.5 h-3.5" />
               <span>Log In</span>
@@ -278,7 +278,8 @@ export const Navbar: React.FC<NavbarProps> = ({
           {/* Mobile Hamburger Toggle */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="xl:hidden p-2 rounded-xl text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+            className="xl:hidden p-2 rounded-xl text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 cursor-pointer"
+            aria-label="Toggle Navigation Menu"
           >
             {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
