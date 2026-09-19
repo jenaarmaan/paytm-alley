@@ -1,0 +1,6 @@
+{
+  "name": "VoiceLend",
+  "description": "From Voice to Working Capital: Multilingual voice AI lending layer for Indian micro-merchants with explainable deterministic underwriting.",
+  "requestFramePermissions": ["microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
