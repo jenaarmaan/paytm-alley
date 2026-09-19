@@ -21,6 +21,7 @@ import { CapitalFlowModal } from './components/CapitalFlowModal';
 import { TrustModal } from './components/TrustModal';
 import { PersonaPerspectiveBar } from './components/PersonaPerspectiveBar';
 import { MerchantOnboardingModal } from './components/MerchantOnboardingModal';
+import { MerchantOnboardingView } from './components/MerchantOnboardingView';
 import { CheckCircle2, Volume2, VolumeX, X } from 'lucide-react';
 import { speechService } from './services/speechService';
 import { getVoiceIntentAcknowledgement, getVoiceSubmissionAcknowledgement } from './services/translations';
@@ -115,6 +116,51 @@ export function App() {
   const [isCapitalFlowModalOpen, setIsCapitalFlowModalOpen] = useState<boolean>(false);
   const [isSubmittingDossier, setIsSubmittingDossier] = useState<boolean>(false);
 
+  // Dynamic Application Status Update & Immediate Active Loan Activation
+  const handleUpdateApplicationStatus = async (appId: string, status: LoanApplication['status']) => {
+    apiClient.updateApplicationStatus(appId, status);
+    setApplications((prev) =>
+      prev.map((a) => (a.applicationId === appId ? { ...a, status } : a))
+    );
+
+    // When lender disburses loan, immediately create/update active loan facility
+    if (status === 'Disbursed') {
+      const targetApp = applications.find((a) => a.applicationId === appId);
+      if (targetApp) {
+        const dailySales = Math.max(1000, Math.round((activeMerchant.monthlySales || 150000) / 30));
+        const dailyDeduction = Math.round(targetApp.monthlyEMI / 30);
+        const qrSplit = Math.min(15, Math.max(5, Math.round((dailyDeduction / dailySales) * 100)));
+
+        const newActiveLoan: ActiveLoan = {
+          loanId: `LN-2026-${targetApp.applicationId.replace('VL-2026-', '')}`,
+          applicationId: targetApp.applicationId,
+          merchantId: targetApp.merchantId,
+          originalAmount: targetApp.approvedAmount,
+          outstandingBalance: targetApp.approvedAmount,
+          tenureMonths: targetApp.tenureMonths,
+          completedTenureMonths: 0,
+          monthlyEMI: targetApp.monthlyEMI,
+          repaymentFrequency: 'daily',
+          dailyDeductionAmount: dailyDeduction,
+          qrDeductionPercentage: qrSplit,
+          annualInterestRate: targetApp.interestRate,
+          nextDueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }),
+          dailySettlementHistory: [
+            { date: 'Today (Live)', totalQrVolume: dailySales, autoSplitDeducted: dailyDeduction, netMerchantPayout: dailySales - dailyDeduction, status: 'Settled' },
+          ],
+          repaymentHistory: Array.from({ length: targetApp.tenureMonths }, (_, i) => ({
+            month: `Month ${i + 1}`,
+            emiPaid: targetApp.monthlyEMI,
+            status: 'Upcoming' as const,
+          })),
+        };
+
+        setActiveLoan(newActiveLoan);
+        apiClient.saveActiveLoan(newActiveLoan);
+      }
+    }
+  };
+
   // Fetch initial applications and active loans from server or fallback
   useEffect(() => {
     apiClient.getApplications().then((apps) => {
@@ -124,12 +170,24 @@ export function App() {
       if (loan) setActiveLoan(loan);
     });
     apiClient.getInsuranceProducts().then((prods) => {
-      if (prods && prods.length) setInsuranceProducts(prods);
+      if (prods && prods.length) {
+        const sales = activeMerchant.monthlySales || 150000;
+        const calibrated = prods.map((p) => {
+          if (p.id === 'dukan-suraksha') {
+            return { ...p, coverageAmount: Math.min(1000000, Math.max(100000, Math.round(sales * 2))) };
+          }
+          if (p.id === 'credit-shield') {
+            return { ...p, coverageAmount: Math.min(500000, Math.max(50000, Math.round(sales * 1.5))) };
+          }
+          return p;
+        });
+        setInsuranceProducts(calibrated);
+      }
     });
     apiClient.getInsuranceClaims().then((claims) => {
       if (claims && claims.length) setInsuranceClaims(claims);
     });
-  }, [selectedMerchantId]);
+  }, [selectedMerchantId, activeMerchant.monthlySales]);
 
   // Handle Intent Extraction when Voice Transcript is ready
   const handleTranscriptReady = async (transcript: string, engine?: 'sarvam' | 'gemini' | 'deterministic') => {
@@ -317,9 +375,9 @@ export function App() {
 
       // Auto confirm intent after 1.5s
       setTimeout(async () => {
-        const merchant = SEEDED_MERCHANTS['M001'];
+        const merchant = merchantsMap['M001'] || activeMerchant;
         const eligibility = calculateEligibility(merchant, 200000, 12);
-        const enrolledInsurance = SEEDED_INSURANCE_PRODUCTS.filter((p) => p.enrolled);
+        const enrolledInsurance = insuranceProducts.filter((p) => p.enrolled);
         const offer = generateLoanOffer(merchant, 150000, 12, undefined, 'daily', enrolledInsurance);
         const kfs = generateKFS(merchant, offer);
 
@@ -327,10 +385,10 @@ export function App() {
         setCurrentOffer(offer);
         setCurrentKFS(kfs);
         setOfferExplanation(
-          `Aapki dukaan ki regular bikri ke aadhar par ₹1,50,000 ka working capital offer tayar hai. Rozana chhota kist ₹458/day sham ke UPI QR settlement se auto-deduct hoga.`
+          `Aapki dukaan ki regular bikri ke aadhar par ₹1,50,000 ka working capital offer tayar hai. Rozana chhota kist ₹${offer.dailyDeductionAmount}/day sham ke UPI QR settlement se auto-deduct hoga (${offer.annualInterestRate}% p.a.).`
         );
         setVoiceKfsSummary(
-          `Aap ₹1,50,000 ke RBI-compliant Key Facts Statement ki samiksha kar rahe hain. Isme rozana ₹458/day QR auto-split hai aur byaaj dar 18% p.a. hai. Raashi seedhe Regulated Lender Escrow se jama hogi.`
+          `Aap ₹1,50,000 ke RBI-compliant Key Facts Statement ki samiksha kar rahe hain. Isme rozana ₹${offer.dailyDeductionAmount}/day QR auto-split hai aur byaaj dar ${offer.annualInterestRate}% p.a. hai. Raashi seedhe Regulated Lender Escrow se jama hogi.`
         );
         setJourneyStep('ELIGIBILITY');
       }, 1600);
@@ -378,6 +436,7 @@ export function App() {
         activeMerchant={activeMerchant}
         language={selectedLanguage}
         onOpenCapitalFlow={() => setIsCapitalFlowModalOpen(true)}
+        onOpenOnboarding={() => setIsOnboardingModalOpen(true)}
       />
 
       {/* 2.1 Prominent Merchant Persona Perspective Bar */}
@@ -586,12 +645,7 @@ export function App() {
           <AdminDashboardView
             applications={applications}
             selectedAppId={submittedApplication?.applicationId}
-            onUpdateStatus={(appId, status) => {
-              apiClient.updateApplicationStatus(appId, status);
-              setApplications((prev) =>
-                prev.map((a) => (a.applicationId === appId ? { ...a, status } : a))
-              );
-            }}
+            onUpdateStatus={handleUpdateApplicationStatus}
             onNavigateToFederated={() => setCurrentView('federated-security')}
           />
         )}
@@ -606,6 +660,14 @@ export function App() {
         {/* VIEW 9: ZERO-KNOWLEDGE FEDERATED LEARNING & CYBERSECURITY */}
         {currentView === 'federated-security' && (
           <FederatedSecurityConsole />
+        )}
+
+        {/* VIEW 10: REAL-TIME MERCHANT ONBOARDING ENGINE */}
+        {currentView === 'merchant-onboarding' && (
+          <MerchantOnboardingView
+            onMerchantCreated={handleOnboardMerchant}
+            onNavigate={setCurrentView}
+          />
         )}
       </main>
 

@@ -375,9 +375,10 @@ export class ApiClient {
       console.warn('Backend submission failed, creating local submitted application');
     }
 
-    const merchant = SEEDED_MERCHANTS[data.merchantId] || SEEDED_MERCHANTS['M001'];
+    const merchant = this.getMerchant(data.merchantId);
+    const dynamicAppId = `VL-2026-00${Math.floor(100 + Math.random() * 899)}`;
     return {
-      applicationId: `VL-2026-00125`,
+      applicationId: dynamicAppId,
       merchantId: data.merchantId,
       merchantName: merchant.name,
       businessName: merchant.businessName,
@@ -430,6 +431,10 @@ export class ApiClient {
     return null;
   }
 
+  public saveActiveLoan(loan: ActiveLoan) {
+    this.activeLoansRegistry[loan.merchantId] = loan;
+  }
+
   public async getActiveLoan(merchantId: string): Promise<ActiveLoan> {
     try {
       const res = await fetch(`${this.baseUrl}/loans/active/${merchantId}`);
@@ -438,7 +443,44 @@ export class ApiClient {
     } catch (e) {
       // ignore
     }
-    return SEEDED_ACTIVE_LOAN;
+
+    if (this.activeLoansRegistry[merchantId]) {
+      return this.activeLoansRegistry[merchantId];
+    }
+
+    const merchant = this.getMerchant(merchantId);
+    const amount = Math.min(200000, Math.max(50000, Math.round(merchant.monthlySales * 0.8)));
+    const rate = 16.0;
+    const emi = Math.round(amount * 0.091);
+    const dailyDeduction = Math.round(emi / 30);
+    const dailySales = Math.max(1000, Math.round(merchant.monthlySales / 30));
+
+    const generatedLoan: ActiveLoan = {
+      loanId: `LN-2026-${merchantId}`,
+      applicationId: `VL-2026-${merchantId}`,
+      merchantId: merchant.merchantId,
+      originalAmount: amount,
+      outstandingBalance: amount,
+      tenureMonths: 12,
+      completedTenureMonths: 0,
+      monthlyEMI: emi,
+      repaymentFrequency: 'daily',
+      dailyDeductionAmount: dailyDeduction,
+      qrDeductionPercentage: Math.min(15, Math.max(5, Math.round((dailyDeduction / dailySales) * 100))),
+      annualInterestRate: rate,
+      nextDueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }),
+      dailySettlementHistory: [
+        { date: 'Today (Live)', totalQrVolume: dailySales, autoSplitDeducted: dailyDeduction, netMerchantPayout: dailySales - dailyDeduction, status: 'Settled' },
+      ],
+      repaymentHistory: Array.from({ length: 12 }, (_, i) => ({
+        month: `Month ${i + 1}`,
+        emiPaid: emi,
+        status: 'Upcoming' as const,
+      })),
+    };
+
+    this.activeLoansRegistry[merchantId] = generatedLoan;
+    return generatedLoan;
   }
 
   public async getAdminMetrics(): Promise<any> {
