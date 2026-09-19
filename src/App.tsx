@@ -24,6 +24,7 @@ import { MerchantOnboardingModal } from './components/MerchantOnboardingModal';
 import { MerchantOnboardingView } from './components/MerchantOnboardingView';
 import { FloatingAlleyWidget } from './components/FloatingAlleyWidget';
 import { AlleyFlowConsole } from './components/AlleyFlowConsole';
+import { DocumentationAndSettingsModal } from './components/DocumentationAndSettingsModal';
 import { CheckCircle2, Volume2, VolumeX, X } from 'lucide-react';
 import { speechService } from './services/speechService';
 import { getVoiceIntentAcknowledgement, getVoiceSubmissionAcknowledgement } from './services/translations';
@@ -117,6 +118,8 @@ export function App() {
   const [isTrustModalOpen, setIsTrustModalOpen] = useState<boolean>(false);
   const [isCapitalFlowModalOpen, setIsCapitalFlowModalOpen] = useState<boolean>(false);
   const [isAlleyFlowOpen, setIsAlleyFlowOpen] = useState<boolean>(false);
+  const [isDocsSettingsOpen, setIsDocsSettingsOpen] = useState<boolean>(false);
+  const [docsSettingsTab, setDocsSettingsTab] = useState<'personas' | 'settings' | 'documentation' | 'rails'>('personas');
   const [isSubmittingDossier, setIsSubmittingDossier] = useState<boolean>(false);
 
   // Dynamic Application Status Update & Immediate Active Loan Activation
@@ -400,36 +403,7 @@ export function App() {
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 font-sans text-slate-900 dark:text-slate-100 flex flex-col selection:bg-emerald-500 selection:text-white">
-      {/* 1. Top Hackathon Demo Control Bar */}
-      <DemoBanner
-        currentView={currentView}
-        onNavigate={(v) => {
-          stopVoiceFeedback();
-          setCurrentView(v);
-        }}
-        selectedMerchantId={selectedMerchantId}
-        onSelectMerchant={(id) => {
-          stopVoiceFeedback();
-          setSelectedMerchantId(id);
-          const m = merchantsMap[id];
-          if (m) setSelectedLanguage(m.preferredLanguage);
-        }}
-        selectedLanguage={selectedLanguage}
-        onSelectLanguage={(lang) => {
-          stopVoiceFeedback();
-          setSelectedLanguage(lang);
-        }}
-        onRunFullDemo={handleRunFullDemo}
-        onOpenTrustModal={() => setIsTrustModalOpen(true)}
-        autoVoiceEnabled={autoVoiceEnabled}
-        onToggleAutoVoice={() => {
-          stopVoiceFeedback();
-          setAutoVoiceEnabled((prev) => !prev);
-        }}
-        merchants={merchantsMap}
-      />
-
-      {/* 2. Main Navigation Header */}
+      {/* 1. Main Navigation Header (Clean, Ultra-Sleek Enterprise Navbar) */}
       <Navbar
         currentView={currentView}
         onNavigate={(v) => {
@@ -440,19 +414,15 @@ export function App() {
         language={selectedLanguage}
         onOpenCapitalFlow={() => setIsCapitalFlowModalOpen(true)}
         onOpenOnboarding={() => setIsOnboardingModalOpen(true)}
-      />
-
-      {/* 2.1 Prominent Merchant Persona Perspective Bar */}
-      <PersonaPerspectiveBar
-        merchants={merchantsMap}
-        activeMerchantId={selectedMerchantId}
-        onSelectMerchant={(id) => {
-          stopVoiceFeedback();
-          setSelectedMerchantId(id);
-          const m = merchantsMap[id];
-          if (m) setSelectedLanguage(m.preferredLanguage);
+        onOpenDocsAndSettings={(tab = 'personas') => {
+          setDocsSettingsTab(tab);
+          setIsDocsSettingsOpen(true);
         }}
-        onOpenOnboarding={() => setIsOnboardingModalOpen(true)}
+        autoVoiceEnabled={autoVoiceEnabled}
+        onToggleAutoVoice={() => {
+          stopVoiceFeedback();
+          setAutoVoiceEnabled((prev) => !prev);
+        }}
       />
 
       {/* 3. Main Body Container */}
@@ -807,6 +777,37 @@ export function App() {
           await handleUpdateApplicationStatus(newAppId, 'Disbursed');
           setCurrentView('merchant-loans');
         }}
+      />
+      {/* Documentation, Demo Personas & Settings Modal Hub */}
+      <DocumentationAndSettingsModal
+        isOpen={isDocsSettingsOpen}
+        onClose={() => setIsDocsSettingsOpen(false)}
+        initialTab={docsSettingsTab}
+        merchants={merchantsMap}
+        activeMerchantId={selectedMerchantId}
+        onSelectMerchant={(id) => {
+          stopVoiceFeedback();
+          setSelectedMerchantId(id);
+          const m = merchantsMap[id];
+          if (m) setSelectedLanguage(m.preferredLanguage);
+        }}
+        selectedLanguage={selectedLanguage}
+        onSelectLanguage={(lang) => {
+          setSelectedLanguage(lang);
+        }}
+        autoVoiceEnabled={autoVoiceEnabled}
+        onToggleAutoVoice={() => {
+          stopVoiceFeedback();
+          setAutoVoiceEnabled((prev) => !prev);
+        }}
+        activeEngine={activeAiEngine}
+        onChangeEngine={(engine) => setActiveAiEngine(engine)}
+        onOpenOnboarding={() => setIsOnboardingModalOpen(true)}
+        onStartVoiceLoanWithPrompt={(prompt, lang) => {
+          if (lang) setSelectedLanguage(lang);
+          handleStartVoiceLoan(prompt);
+        }}
+        onOpenCapitalRails={() => setIsCapitalFlowModalOpen(true)}
       />
     </div>
   );

@@ -10,8 +10,14 @@ import {
   Menu,
   X,
   Store,
-  ChevronRight,
+  ChevronDown,
   UserPlus,
+  BookOpen,
+  Settings,
+  Volume2,
+  VolumeX,
+  Sparkles,
+  BadgeCheck
 } from 'lucide-react';
 import { Merchant, SupportedLanguage } from '../types';
 
@@ -22,6 +28,9 @@ interface NavbarProps {
   language: SupportedLanguage;
   onOpenCapitalFlow?: () => void;
   onOpenOnboarding?: () => void;
+  onOpenDocsAndSettings?: (tab?: 'personas' | 'settings' | 'documentation' | 'rails') => void;
+  autoVoiceEnabled?: boolean;
+  onToggleAutoVoice?: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -31,69 +40,90 @@ export const Navbar: React.FC<NavbarProps> = ({
   language,
   onOpenCapitalFlow,
   onOpenOnboarding,
+  onOpenDocsAndSettings,
+  autoVoiceEnabled = true,
+  onToggleAutoVoice,
 }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  const navItems = [
+  const primaryNavItems = [
     { id: 'landing', label: 'Overview', icon: Store },
-    { id: 'merchant-onboarding', label: 'Onboard', icon: UserPlus, badge: 'Instant' },
     { id: 'merchant-dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'merchant-voice', label: 'Alley Voice', icon: Mic, highlight: true },
-    { id: 'insurance', label: 'Sachet Insurance', icon: Shield, badge: '₹3/d' },
     { id: 'merchant-loans', label: 'My Loans', icon: CreditCard },
+    { id: 'insurance', label: 'Sachet Insurance', icon: Shield, badge: '₹3/d' },
     { id: 'merchant-health', label: 'Business Health', icon: TrendingUp },
     { id: 'federated-security', label: 'Privacy & FedAI', icon: ShieldCheck, badge: 'ZKP' },
     { id: 'admin-dashboard', label: 'Lender Portal', icon: Shield },
-    { id: 'enterprise-integrations', label: 'API & MCP', icon: Layers },
   ];
 
   return (
-    <header className="bg-white/95 backdrop-blur-md border-b border-slate-200 sticky top-9 z-40">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-        {/* Logo: Speech Waveform into Rupee Symbol */}
-        <div
-          id="nav-logo"
-          onClick={() => onNavigate('landing')}
-          className="flex items-center gap-2.5 cursor-pointer group select-none"
-        >
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-slate-900 via-sky-950 to-emerald-800 flex items-center justify-center shadow-md shadow-slate-900/10 group-hover:scale-105 transition-transform">
-            {/* Custom SVG logo: Waveform merging into Rupee Symbol */}
-            <svg
-              className="w-6 h-6 text-white"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              {/* Soundwave bars */}
-              <path d="M2 10v4" className="text-sky-400 stroke-sky-400" />
-              <path d="M5 7v10" className="text-emerald-400 stroke-emerald-400" />
-              {/* Rupee symbol curve */}
-              <path d="M9 7h8" />
-              <path d="M9 11h6" />
-              <path d="M9 7c4 0 5 4 0 7l6 6" className="stroke-emerald-400" />
-            </svg>
-          </div>
-          <div>
-            <div className="flex items-center gap-1.5">
-              <span className="font-extrabold text-xl tracking-tight text-slate-900 font-sans">
-                Voice<span className="text-emerald-600">Lend</span>
-              </span>
-              <span className="text-[10px] uppercase font-bold tracking-widest px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
-                Indic AI
-              </span>
+    <header className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 sticky top-0 z-40 shadow-xs">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 h-16 flex items-center justify-between gap-2 sm:gap-4">
+        
+        {/* Left: Logo & Active Persona Quick Trigger */}
+        <div className="flex items-center gap-3 shrink-0">
+          {/* Logo */}
+          <div
+            id="nav-logo"
+            onClick={() => onNavigate('landing')}
+            className="flex items-center gap-2 cursor-pointer group select-none"
+          >
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-slate-900 via-sky-950 to-emerald-800 flex items-center justify-center shadow-md shadow-slate-900/10 group-hover:scale-105 transition-transform">
+              <svg
+                className="w-5 h-5 text-white"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M2 10v4" className="text-sky-400 stroke-sky-400" />
+                <path d="M5 7v10" className="text-emerald-400 stroke-emerald-400" />
+                <path d="M9 7h8" />
+                <path d="M9 11h6" />
+                <path d="M9 7c4 0 5 4 0 7l6 6" className="stroke-emerald-400" />
+              </svg>
             </div>
-            <p className="text-[10px] text-slate-500 font-medium -mt-0.5 tracking-tight">
-              From Voice to Working Capital
-            </p>
+            <div>
+              <div className="flex items-center gap-1">
+                <span className="font-extrabold text-base sm:text-lg tracking-tight text-slate-900 dark:text-white font-sans">
+                  Voice<span className="text-emerald-600">Lend</span>
+                </span>
+                <span className="text-[9px] uppercase font-black tracking-wider px-1.5 py-0.2 rounded bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                  Alley AI
+                </span>
+              </div>
+            </div>
           </div>
+
+          {/* Quick Active Persona Switcher Pill */}
+          <button
+            id="btn-navbar-switch-persona"
+            onClick={() => onOpenDocsAndSettings?.('personas')}
+            className="hidden sm:flex items-center gap-2 px-2.5 py-1 rounded-xl bg-slate-100 hover:bg-slate-200/80 dark:bg-slate-800 dark:hover:bg-slate-700/80 border border-slate-200/80 dark:border-slate-700 text-left transition-all cursor-pointer group"
+            title="Click to switch active demo merchant profile"
+          >
+            <div className="w-6 h-6 rounded-lg bg-gradient-to-tr from-indigo-600 to-emerald-500 text-white flex items-center justify-center font-bold text-[10px] shadow-xs">
+              {activeMerchant.name.split(' ').map((n) => n[0]).join('').slice(0, 2)}
+            </div>
+            <div className="hidden lg:block leading-tight">
+              <div className="text-[11px] font-bold text-slate-900 dark:text-white flex items-center gap-1">
+                <span className="truncate max-w-[100px]">{activeMerchant.name}</span>
+                <BadgeCheck className="w-3 h-3 text-sky-500 shrink-0" />
+              </div>
+              <div className="text-[9px] text-slate-500 dark:text-slate-400 truncate max-w-[100px]">
+                {activeMerchant.businessName}
+              </div>
+            </div>
+            <ChevronDown className="w-3.5 h-3.5 text-slate-400 group-hover:text-slate-700 dark:group-hover:text-slate-200 transition-transform" />
+          </button>
         </div>
 
-        {/* Desktop Navigation Links */}
-        <nav className="hidden xl:flex items-center gap-1">
-          {navItems.map((item) => {
+        {/* Center: Clean Desktop Navigation Links */}
+        <nav className="hidden xl:flex items-center gap-1 overflow-x-auto">
+          {primaryNavItems.map((item) => {
             const Icon = item.icon;
             const isActive = currentView === item.id;
             return (
@@ -101,23 +131,66 @@ export const Navbar: React.FC<NavbarProps> = ({
                 key={item.id}
                 id={`nav-${item.id}`}
                 onClick={() => onNavigate(item.id)}
-                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
                   isActive
-                    ? 'bg-slate-900 text-white shadow-sm'
+                    ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-xs'
                     : item.highlight
-                    ? 'bg-emerald-50 text-emerald-800 hover:bg-emerald-100 font-bold border border-emerald-200/80'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                    ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 hover:bg-emerald-100 border border-emerald-200/80 dark:border-emerald-800'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800'
                 }`}
               >
                 <Icon className={`w-3.5 h-3.5 ${item.highlight && !isActive ? 'text-emerald-600' : ''}`} />
                 <span>{item.label}</span>
+                {item.badge && (
+                  <span className="text-[9px] px-1 py-0.2 rounded bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200 font-mono">
+                    {item.badge}
+                  </span>
+                )}
               </button>
             );
           })}
         </nav>
 
-        {/* Prominent Onboard Button & Merchant Profile Badge */}
-        <div className="hidden md:flex items-center gap-2.5 pl-2 border-l border-slate-200">
+        {/* Right: Actions, Docs & Settings, Onboard Button */}
+        <div className="flex items-center gap-2 shrink-0">
+          
+          {/* Docs & Demo Hub Trigger Button */}
+          <button
+            id="btn-navbar-docs-hub"
+            onClick={() => onOpenDocsAndSettings?.('documentation')}
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/60 dark:hover:bg-indigo-900 text-indigo-900 dark:text-indigo-200 border border-indigo-200 dark:border-indigo-800 text-xs font-bold transition-all cursor-pointer shadow-2xs"
+            title="Open Documentation, Architecture & Demo Personas Hub"
+          >
+            <BookOpen className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
+            <span className="hidden sm:inline">Docs &amp; Demo Hub</span>
+          </button>
+
+          {/* Settings Trigger Button */}
+          <button
+            id="btn-navbar-settings"
+            onClick={() => onOpenDocsAndSettings?.('settings')}
+            className="p-2 rounded-xl text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 transition-colors cursor-pointer"
+            title="System Settings & Preferences"
+          >
+            <Settings className="w-4 h-4" />
+          </button>
+
+          {/* Audio Spoken Toggle */}
+          {onToggleAutoVoice && (
+            <button
+              onClick={onToggleAutoVoice}
+              className={`p-2 rounded-xl border transition-colors cursor-pointer ${
+                autoVoiceEnabled
+                  ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-700'
+                  : 'text-slate-400 border-slate-200 dark:border-slate-800 hover:bg-slate-100'
+              }`}
+              title={`Spoken Voice Feedback: ${autoVoiceEnabled ? 'ON' : 'OFF'} (${language})`}
+            >
+              {autoVoiceEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
+            </button>
+          )}
+
+          {/* + Onboard Button */}
           <button
             id="btn-navbar-onboard-merchant"
             onClick={() => {
@@ -127,82 +200,92 @@ export const Navbar: React.FC<NavbarProps> = ({
                 onNavigate('merchant-onboarding');
               }
             }}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-bold shadow-sm shadow-emerald-600/20 transition-all hover:scale-105 active:scale-95 cursor-pointer"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-extrabold shadow-sm shadow-emerald-600/20 transition-all hover:scale-105 active:scale-95 cursor-pointer"
             title="Onboard a new merchant profile in 60 seconds"
           >
             <UserPlus className="w-3.5 h-3.5" />
-            <span>+ Onboard New Merchant</span>
+            <span className="hidden md:inline">+ Onboard New Merchant</span>
+            <span className="md:hidden">+ Onboard</span>
           </button>
 
-          {onOpenCapitalFlow && (
-            <button
-              onClick={onOpenCapitalFlow}
-              className="hidden lg:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-slate-200 hover:border-slate-300 text-[11px] font-semibold text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer"
-              title="View RBI-compliant capital flow and fund routing architecture"
-            >
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              <span>Capital Rails</span>
-            </button>
-          )}
-
-          <div className="text-right hidden lg:block">
-            <div className="text-xs font-bold text-slate-900">{activeMerchant.businessName}</div>
-            <div className="text-[11px] text-slate-500 flex items-center justify-end gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-              {activeMerchant.location.split(',')[0]} • {language}
-            </div>
-          </div>
+          {/* Mobile Hamburger Toggle */}
+          <button
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="xl:hidden p-2 rounded-xl text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+          >
+            {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          </button>
         </div>
-
-        {/* Mobile Hamburger Toggle */}
-        <button
-          id="btn-mobile-menu"
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          className="md:hidden p-2 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100"
-          aria-label="Toggle Navigation Menu"
-        >
-          {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-        </button>
       </div>
 
-      {/* Mobile Drawer */}
+      {/* Mobile Menu Dropdown */}
       {mobileMenuOpen && (
-        <div className="md:hidden border-t border-slate-200 bg-white px-4 py-3 space-y-1 shadow-lg animate-in slide-in-from-top duration-150">
-          <div className="p-2 mb-2 bg-slate-50 rounded-lg border border-slate-200 flex items-center justify-between">
-            <div>
-              <div className="text-xs font-bold text-slate-800">{activeMerchant.businessName}</div>
-              <div className="text-[11px] text-slate-500">{activeMerchant.name} • {language}</div>
+        <div className="xl:hidden border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-4 py-3 space-y-1 animate-in slide-in-from-top-2 duration-150">
+          <div className="p-2 mb-2 rounded-xl bg-slate-50 dark:bg-slate-800 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="w-7 h-7 rounded-lg bg-emerald-600 text-white flex items-center justify-center font-bold text-xs">
+                {activeMerchant.name.split(' ').map((n) => n[0]).join('').slice(0, 2)}
+              </div>
+              <div>
+                <div className="text-xs font-bold text-slate-900 dark:text-white">{activeMerchant.name}</div>
+                <div className="text-[10px] text-slate-500">{activeMerchant.businessName}</div>
+              </div>
             </div>
-            <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded">
-              Verified Kirana
-            </span>
+            <button
+              onClick={() => {
+                setMobileMenuOpen(false);
+                onOpenDocsAndSettings?.('personas');
+              }}
+              className="text-xs font-bold text-emerald-600 dark:text-emerald-400 hover:underline"
+            >
+              Switch Profile
+            </button>
           </div>
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = currentView === item.id;
-            return (
-              <button
-                key={item.id}
-                onClick={() => {
-                  onNavigate(item.id);
-                  setMobileMenuOpen(false);
-                }}
-                className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium ${
-                  isActive
-                    ? 'bg-slate-900 text-white'
-                    : item.highlight
-                    ? 'bg-emerald-50 text-emerald-800 font-bold'
-                    : 'text-slate-700 hover:bg-slate-100'
-                }`}
-              >
-                <div className="flex items-center gap-2.5">
+
+          <div className="grid grid-cols-2 gap-1">
+            {primaryNavItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = currentView === item.id;
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => {
+                    onNavigate(item.id);
+                    setMobileMenuOpen(false);
+                  }}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold transition-all text-left ${
+                    isActive
+                      ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900'
+                      : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
+                  }`}
+                >
                   <Icon className="w-4 h-4" />
                   <span>{item.label}</span>
-                </div>
-                <ChevronRight className="w-4 h-4 opacity-50" />
-              </button>
-            );
-          })}
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex gap-2">
+            <button
+              onClick={() => {
+                setMobileMenuOpen(false);
+                onOpenDocsAndSettings?.('documentation');
+              }}
+              className="flex-1 py-2 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-900 dark:text-indigo-200 text-xs font-bold text-center"
+            >
+              Docs &amp; Specs
+            </button>
+            <button
+              onClick={() => {
+                setMobileMenuOpen(false);
+                onOpenDocsAndSettings?.('settings');
+              }}
+              className="flex-1 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-xs font-bold text-center"
+            >
+              Settings
+            </button>
+          </div>
         </div>
       )}
     </header>
