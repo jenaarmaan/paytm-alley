@@ -276,12 +276,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                             ? 'bg-gradient-to-tr from-purple-700 via-indigo-600 to-indigo-900'
                             : 'bg-slate-900 dark:bg-slate-800'
                         }`}>
-                          {isLender ? '🏛️' : m.name.split(' ').map((n) => n[0]).join('').slice(0, 2)}
+                          {isLender ? '🏛️' : (m.name || 'Merchant').split(' ').map((n) => n[0]).join('').slice(0, 2)}
                         </div>
                         <div>
                           <div className="flex items-center gap-1.5">
                             <span className="font-extrabold text-xs text-slate-900 dark:text-white">
-                              {m.name}
+                              {m.name || 'Merchant'}
                             </span>
                             {isLender ? (
                               <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300 border border-purple-300 dark:border-purple-800">
@@ -295,7 +295,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                             </span>
                           </div>
                           <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium block">
-                            {m.businessName} • {m.tradeSector || m.businessType}
+                            {m.businessName || 'Store'} • {m.tradeSector || m.businessType || 'Retail'}
                           </span>
                         </div>
                       </div>
@@ -314,7 +314,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                         <div>
                           <span className="text-[10px] text-slate-400 block">Location &amp; Scope</span>
                           <span className="font-medium text-slate-800 dark:text-slate-200 text-xs truncate block max-w-[130px]">
-                            {m.location}
+                            {m.location || 'India'}
                           </span>
                         </div>
 
@@ -323,7 +323,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                             {isLender ? 'Active Line' : 'Dialect & Score'}
                           </span>
                           <span className="font-medium text-slate-800 dark:text-slate-200 text-xs">
-                            {isLender ? '124 Loans Managed' : `${m.preferredLanguage} (${m.digitalTransactionScore}/100)`}
+                            {isLender ? '124 Loans Managed' : `${m.preferredLanguage || 'Hinglish'} (${m.digitalTransactionScore || 85}/100)`}
                           </span>
                         </div>
                       </div>
@@ -339,7 +339,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                         }`}
                       >
                         <LogIn className="w-3.5 h-3.5" />
-                        <span>{isLender ? 'Log In as Lender Desk' : `Log In as ${m.name.split(' ')[0]}`}</span>
+                        <span>{isLender ? 'Log In as Lender Desk' : `Log In as ${(m.name || 'Merchant').split(' ')[0]}`}</span>
                       </button>
                     </div>
                   );

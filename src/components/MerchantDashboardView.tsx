@@ -33,15 +33,38 @@ export const MerchantDashboardView: React.FC<MerchantDashboardViewProps> = ({
   merchant,
   language,
   activeLoan,
-  recentApplications,
+  recentApplications = [],
   onStartVoiceLoan,
   onViewMyLoans,
   onViewBusinessHealth,
   onViewInsurance,
 }) => {
+  const safeMerchant: Merchant = merchant || {
+    merchantId: 'M001',
+    name: 'Ramesh Kumar',
+    businessName: 'Ramesh General Stores',
+    businessType: 'Kirana / Grocery',
+    businessVintageMonths: 50,
+    monthlySales: 180000,
+    monthlyCashflow: 82000,
+    existingEMI: 11500,
+    repaymentHistory: 'good',
+    digitalTransactionScore: 87,
+    businessHealth: 'healthy',
+    location: 'Kanpur / Bengaluru',
+    preferredLanguage: 'Hinglish',
+    upiQrTransactionsPerMonth: 420,
+    activeCreditLines: 1,
+    upiHandle: 'ramesh.kirana@paytm',
+    tradeSector: 'Kirana & Daily Staples',
+  };
+
   const t = TRANSLATIONS[language] || TRANSLATIONS['English'];
-  const debtRatio = ((merchant.existingEMI / merchant.monthlyCashflow) * 100).toFixed(0);
-  const eligibility = calculateEligibility(merchant, 0);
+  const monthlyCashflow = safeMerchant.monthlyCashflow || Math.round((safeMerchant.monthlySales || 150000) * 0.45);
+  const existingEMI = safeMerchant.existingEMI || 0;
+  const debtRatio = monthlyCashflow > 0 ? ((existingEMI / monthlyCashflow) * 100).toFixed(0) : '0';
+  const eligibility = calculateEligibility(safeMerchant, 0);
+  const safeApplications = recentApplications || [];
 
   return (
     <div id="merchant-dashboard-view" className="space-y-6 animate-in fade-in-50 duration-300">
@@ -52,13 +75,13 @@ export const MerchantDashboardView: React.FC<MerchantDashboardViewProps> = ({
             <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
               Verified Kirana Store
             </span>
-            <span className="text-xs text-slate-400">• {merchant.location}</span>
+            <span className="text-xs text-slate-400">• {safeMerchant.location || 'India'}</span>
           </div>
           <h1 className="text-xl sm:text-3xl font-extrabold text-slate-900 mt-1 tracking-tight">
-            {t.goodMorning}, {merchant.name}
+            {t.goodMorning}, {safeMerchant.name || 'Merchant'}
           </h1>
           <p className="text-xs text-slate-500 mt-0.5">
-            {merchant.businessName} • Operational for {(merchant.businessVintageMonths / 12).toFixed(1)} years
+            {safeMerchant.businessName || 'Enterprise'} • Operational for {((safeMerchant.businessVintageMonths || 36) / 12).toFixed(1)} years
           </p>
         </div>
 
@@ -68,7 +91,7 @@ export const MerchantDashboardView: React.FC<MerchantDashboardViewProps> = ({
           className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-xs font-semibold text-slate-700 transition-colors cursor-pointer"
         >
           <HeartPulse className="w-4 h-4 text-emerald-600" />
-          <span>Health: {t.healthy} (87/100)</span>
+          <span>Health: {t.healthy} ({safeMerchant.digitalTransactionScore || 87}/100)</span>
           <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
         </button>
       </div>
@@ -156,7 +179,7 @@ export const MerchantDashboardView: React.FC<MerchantDashboardViewProps> = ({
             <TrendingUp className="w-4 h-4 text-sky-600" />
           </div>
           <div className="text-2xl font-black text-slate-900 mt-1">
-            ₹{merchant.monthlySales.toLocaleString('en-IN')}
+            ₹{(safeMerchant.monthlySales || 150000).toLocaleString('en-IN')}
           </div>
           <div className="text-[11px] text-slate-500 mt-1">
             +8.4% from last month
@@ -170,7 +193,7 @@ export const MerchantDashboardView: React.FC<MerchantDashboardViewProps> = ({
             <IndianRupee className="w-4 h-4 text-emerald-600" />
           </div>
           <div className="text-2xl font-black text-emerald-700 mt-1">
-            ₹{merchant.monthlyCashflow.toLocaleString('en-IN')}
+            ₹{monthlyCashflow.toLocaleString('en-IN')}
           </div>
           <div className="text-[11px] text-slate-500 mt-1">
             Net operating surplus
@@ -184,7 +207,7 @@ export const MerchantDashboardView: React.FC<MerchantDashboardViewProps> = ({
             <CreditCard className="w-4 h-4 text-amber-600" />
           </div>
           <div className="text-2xl font-black text-slate-900 mt-1">
-            ₹{merchant.existingEMI.toLocaleString('en-IN')}
+            ₹{existingEMI.toLocaleString('en-IN')}
           </div>
           <div className="text-[11px] text-slate-500 mt-1">
             {debtRatio}% of surplus (Healthy &lt;30%)
@@ -244,23 +267,23 @@ export const MerchantDashboardView: React.FC<MerchantDashboardViewProps> = ({
               </div>
               <div className="flex justify-between items-center text-xs">
                 <span className="text-slate-500">Outstanding Balance:</span>
-                <span className="font-bold text-slate-900">₹{activeLoan.outstandingBalance.toLocaleString('en-IN')} / ₹{activeLoan.originalAmount.toLocaleString('en-IN')}</span>
+                <span className="font-bold text-slate-900">₹{(activeLoan.outstandingBalance || 0).toLocaleString('en-IN')} / ₹{(activeLoan.originalAmount || 0).toLocaleString('en-IN')}</span>
               </div>
               <div className="flex justify-between items-center text-xs">
                 <span className="text-slate-500">Next Due Installment:</span>
-                <span className="font-bold text-emerald-700">₹{activeLoan.monthlyEMI.toLocaleString('en-IN')} ({activeLoan.nextDueDate})</span>
+                <span className="font-bold text-emerald-700">₹{(activeLoan.monthlyEMI || 0).toLocaleString('en-IN')} ({activeLoan.nextDueDate})</span>
               </div>
 
               {/* Progress bar */}
               <div className="w-full bg-slate-200 rounded-full h-2 overflow-hidden mt-2">
                 <div
                   className="bg-emerald-600 h-full rounded-full"
-                  style={{ width: `${(activeLoan.completedTenureMonths / activeLoan.tenureMonths) * 100}%` }}
+                  style={{ width: `${((activeLoan.completedTenureMonths || 0) / (activeLoan.tenureMonths || 12)) * 100}%` }}
                 />
               </div>
               <div className="flex justify-between text-[10px] text-slate-400">
-                <span>{activeLoan.completedTenureMonths} Months Paid</span>
-                <span>{activeLoan.tenureMonths - activeLoan.completedTenureMonths} Months Remaining</span>
+                <span>{activeLoan.completedTenureMonths || 0} Months Paid</span>
+                <span>{(activeLoan.tenureMonths || 12) - (activeLoan.completedTenureMonths || 0)} Months Remaining</span>
               </div>
             </div>
 
@@ -286,15 +309,15 @@ export const MerchantDashboardView: React.FC<MerchantDashboardViewProps> = ({
         <div className="bg-white p-6 rounded-2xl border border-slate-200/90 shadow-sm">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-bold text-slate-900">Recent Applications</h3>
-            <span className="text-xs text-slate-500">{recentApplications.length} Recorded</span>
+            <span className="text-xs text-slate-500">{safeApplications.length} Recorded</span>
           </div>
 
           <div className="divide-y divide-slate-100 text-xs">
-            {recentApplications.slice(0, 3).map((app) => (
+            {safeApplications.slice(0, 3).map((app) => (
               <div key={app.applicationId} className="py-3 flex items-center justify-between gap-2">
                 <div>
                   <div className="font-bold text-slate-900 flex items-center gap-2">
-                    <span>₹{app.approvedAmount.toLocaleString('en-IN')}</span>
+                    <span>₹{(app.approvedAmount || app.requestedAmount || 0).toLocaleString('en-IN')}</span>
                     <span className="text-[10px] font-mono text-slate-400 font-normal">({app.applicationId})</span>
                   </div>
                   <div className="text-[11px] text-slate-500">{app.purpose} • {app.timestamp}</div>

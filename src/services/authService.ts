@@ -23,10 +23,36 @@ class AuthService {
   public getMerchants(): Record<string, Merchant> {
     try {
       const stored = localStorage.getItem(STORAGE_KEYS.MERCHANTS);
+      const merged: Record<string, Merchant> = { ...SEEDED_MERCHANTS };
       if (stored) {
         const parsed = JSON.parse(stored);
-        return { ...SEEDED_MERCHANTS, ...parsed };
+        if (parsed && typeof parsed === 'object') {
+          for (const [key, val] of Object.entries(parsed)) {
+            if (val && typeof val === 'object') {
+              const defaultM = SEEDED_MERCHANTS[key] || SEEDED_MERCHANTS['M001'];
+              const castVal = val as Partial<Merchant>;
+              merged[key] = {
+                ...defaultM,
+                ...castVal,
+                merchantId: key,
+                name: castVal.name || defaultM.name || 'Merchant User',
+                businessName: castVal.businessName || defaultM.businessName || 'Enterprise',
+                businessType: castVal.businessType || defaultM.businessType || 'Retail & Kirana',
+                monthlySales: Number(castVal.monthlySales ?? defaultM.monthlySales ?? 150000),
+                monthlyCashflow: Number(castVal.monthlyCashflow ?? defaultM.monthlyCashflow ?? 70000),
+                existingEMI: Number(castVal.existingEMI ?? defaultM.existingEMI ?? 0),
+                businessVintageMonths: Number(castVal.businessVintageMonths ?? defaultM.businessVintageMonths ?? 36),
+                digitalTransactionScore: Number(castVal.digitalTransactionScore ?? defaultM.digitalTransactionScore ?? 85),
+                location: castVal.location || defaultM.location || 'India',
+                preferredLanguage: castVal.preferredLanguage || defaultM.preferredLanguage || 'Hinglish',
+                tradeSector: castVal.tradeSector || defaultM.tradeSector || 'Retail & Kirana',
+                role: castVal.role || (key.startsWith('L') ? 'lender' : 'merchant'),
+              };
+            }
+          }
+        }
       }
+      return merged;
     } catch (e) {
       console.warn('Error reading merchants from localStorage:', e);
     }

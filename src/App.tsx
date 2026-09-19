@@ -52,6 +52,7 @@ import {
 } from './data/seedData';
 import { apiClient } from './services/apiClient';
 import { calculateEligibility, generateLoanOffer, generateKFS } from './services/financialEngine';
+import { ErrorBoundary } from './components/ErrorBoundary';
 
 export function App() {
   // Authentication & Persistent Database States
@@ -70,15 +71,18 @@ export function App() {
   });
   const [selectedLanguage, setSelectedLanguage] = useState<SupportedLanguage>('Hinglish');
 
-  // Active Merchant Profile
-  const activeMerchant: Merchant = merchantsMap[selectedMerchantId] || Object.values(merchantsMap)[0] || SEEDED_MERCHANTS['M001'];
+  // Active Merchant Profile (Guaranteed Non-Null & Fully Populated)
+  const activeMerchant: Merchant = {
+    ...SEEDED_MERCHANTS['M001'],
+    ...((merchantsMap && merchantsMap[selectedMerchantId]) || (merchantsMap && Object.values(merchantsMap)[0]) || SEEDED_MERCHANTS['M001']),
+  };
 
   // Handle Authentication Success (Login)
   const handleAuthSuccess = (merchant: Merchant) => {
     const updatedMerchants = authService.getMerchants();
     setMerchantsMap(updatedMerchants);
     setSelectedMerchantId(merchant.merchantId);
-    setSelectedLanguage(merchant.preferredLanguage);
+    setSelectedLanguage(merchant.preferredLanguage || 'Hinglish');
     setIsAuthenticated(true);
     if (merchant.role === 'lender' || merchant.merchantId === 'L001') {
       setCurrentView('admin-dashboard');
@@ -467,6 +471,7 @@ export function App() {
 
       {/* 3. Main Body Container */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6 sm:py-8">
+        <ErrorBoundary fallbackTitle="VoiceLend Feature View">
         {/* VIEW 1: LANDING OVERVIEW */}
         {currentView === 'landing' && (
           <LandingPageView
@@ -700,6 +705,7 @@ export function App() {
         {currentView === 'federated-security' && (
           <FederatedSecurityConsole />
         )}
+        </ErrorBoundary>
       </main>
 
       {/* Consent Modal */}

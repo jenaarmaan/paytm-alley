@@ -186,11 +186,11 @@ export const Navbar: React.FC<NavbarProps> = ({
                   title="Account Menu & Profile Details"
                 >
                   <div className="w-6 h-6 rounded-lg bg-gradient-to-tr from-indigo-600 to-emerald-500 text-white flex items-center justify-center font-bold text-[10px] shadow-xs">
-                    {activeMerchant.name.split(' ').map((n) => n[0]).join('').slice(0, 2)}
+                    {(activeMerchant?.name || 'Merchant').split(' ').map((n) => n[0]).join('').slice(0, 2)}
                   </div>
                   <div className="hidden sm:block leading-tight">
                     <div className="text-[11px] font-bold text-slate-900 dark:text-white flex items-center gap-1">
-                      <span className="truncate max-w-[120px]">{activeMerchant.name}</span>
+                      <span className="truncate max-w-[120px]">{activeMerchant?.name || 'Merchant'}</span>
                       <BadgeCheck className="w-3 h-3 text-sky-500 shrink-0" />
                     </div>
                   </div>
@@ -202,8 +202,8 @@ export const Navbar: React.FC<NavbarProps> = ({
                   <div className="absolute left-0 mt-2 w-64 bg-white dark:bg-slate-900 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
                     <div className="px-4 py-2 border-b border-slate-100 dark:border-slate-800">
                       <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Active Merchant Session</p>
-                      <p className="text-xs font-bold text-slate-900 dark:text-white mt-0.5">{activeMerchant.name}</p>
-                      <p className="text-[11px] text-slate-500 truncate">{activeMerchant.businessName} • {activeMerchant.location}</p>
+                      <p className="text-xs font-bold text-slate-900 dark:text-white mt-0.5">{activeMerchant?.name || 'Merchant'}</p>
+                      <p className="text-[11px] text-slate-500 truncate">{activeMerchant?.businessName || 'Store'} • {activeMerchant?.location || 'India'}</p>
                     </div>
 
                     <div className="p-1.5 space-y-1 text-xs">
@@ -349,14 +349,16 @@ export const Navbar: React.FC<NavbarProps> = ({
               <div className="p-4 bg-emerald-50/60 dark:bg-emerald-950/30 border-b border-emerald-100 dark:border-emerald-900/50 flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
                   <div className="w-8 h-8 rounded-lg bg-emerald-600 text-white flex items-center justify-center font-bold text-xs shadow-xs">
-                    {activeMerchant.name.split(' ').map((n) => n[0]).join('').slice(0, 2)}
+                    {(activeMerchant?.name || 'Merchant').split(' ').map((n) => n[0]).join('').slice(0, 2)}
                   </div>
                   <div>
                     <div className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1">
-                      <span>{activeMerchant.name}</span>
+                      <span>{activeMerchant?.name || 'Merchant'}</span>
                       <BadgeCheck className="w-3.5 h-3.5 text-sky-500" />
                     </div>
-                    <div className="text-[10px] text-slate-500 dark:text-slate-400">{activeMerchant.businessName} • ₹{activeMerchant.monthlySales?.toLocaleString('en-IN')}/mo</div>
+                    <div className="text-[10px] text-slate-500 dark:text-slate-400">
+                      {activeMerchant?.businessName || 'Store'} • ₹{(activeMerchant?.monthlySales || 150000).toLocaleString('en-IN')}/mo
+                    </div>
                   </div>
                 </div>
                 <button
