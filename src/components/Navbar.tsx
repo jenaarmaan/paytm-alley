@@ -34,7 +34,8 @@ interface NavbarProps {
   onLogout?: () => void;
   onOpenCapitalFlow?: () => void;
   onOpenOnboarding?: () => void;
-  onOpenDocsAndSettings?: (tab?: 'personas' | 'settings' | 'documentation' | 'rails') => void;
+  onOpenDocs?: () => void;
+  onOpenSettings?: () => void;
   autoVoiceEnabled?: boolean;
   onToggleAutoVoice?: () => void;
 }
@@ -49,7 +50,8 @@ export const Navbar: React.FC<NavbarProps> = ({
   onLogout,
   onOpenCapitalFlow,
   onOpenOnboarding,
-  onOpenDocsAndSettings,
+  onOpenDocs,
+  onOpenSettings,
   autoVoiceEnabled = true,
   onToggleAutoVoice,
 }) => {
@@ -236,12 +238,12 @@ export const Navbar: React.FC<NavbarProps> = ({
         {/* Right: Actions, Docs & Settings, Onboard/Logout Button */}
         <div className="flex items-center gap-2 shrink-0">
           
-          {/* Docs & Demo Hub Trigger Button */}
+          {/* Docs & Specs Trigger Button */}
           <button
             id="btn-navbar-docs-hub"
-            onClick={() => onOpenDocsAndSettings?.('documentation')}
+            onClick={() => onOpenDocs?.()}
             className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/60 dark:hover:bg-indigo-900 text-indigo-900 dark:text-indigo-200 border border-indigo-200 dark:border-indigo-800 text-xs font-bold transition-all cursor-pointer shadow-2xs"
-            title="Open Documentation, Architecture & Demo Personas Hub"
+            title="Open Architecture & MCP Specifications"
           >
             <BookOpen className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
             <span className="hidden sm:inline">Docs &amp; Specs</span>
@@ -250,9 +252,9 @@ export const Navbar: React.FC<NavbarProps> = ({
           {/* Settings Trigger Button */}
           <button
             id="btn-navbar-settings"
-            onClick={() => onOpenDocsAndSettings?.('settings')}
+            onClick={() => onOpenSettings?.()}
             className="p-2 rounded-xl text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 transition-colors cursor-pointer"
-            title="System Settings & Preferences"
+            title="System Settings & Profile"
           >
             <Settings className="w-4 h-4" />
           </button>
@@ -390,7 +392,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             <button
               onClick={() => {
                 setMobileMenuOpen(false);
-                onOpenDocsAndSettings?.('documentation');
+                onOpenDocs?.();
               }}
               className="flex-1 py-2 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-900 dark:text-indigo-200 text-xs font-bold text-center"
             >
@@ -399,7 +401,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             <button
               onClick={() => {
                 setMobileMenuOpen(false);
-                onOpenDocsAndSettings?.('settings');
+                onOpenSettings?.();
               }}
               className="flex-1 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-xs font-bold text-center"
             >

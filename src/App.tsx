@@ -25,7 +25,8 @@ import { MerchantOnboardingView } from './components/MerchantOnboardingView';
 import { AuthModal } from './components/AuthModal';
 import { FloatingAlleyWidget } from './components/FloatingAlleyWidget';
 import { AlleyFlowConsole } from './components/AlleyFlowConsole';
-import { DocumentationAndSettingsModal } from './components/DocumentationAndSettingsModal';
+import { SettingsModal } from './components/SettingsModal';
+import { DocsSpecsModal } from './components/DocsSpecsModal';
 import { CheckCircle2, Volume2, VolumeX, X } from 'lucide-react';
 import { speechService } from './services/speechService';
 import { authService } from './services/authService';
@@ -140,8 +141,8 @@ export function App() {
   const [isTrustModalOpen, setIsTrustModalOpen] = useState<boolean>(false);
   const [isCapitalFlowModalOpen, setIsCapitalFlowModalOpen] = useState<boolean>(false);
   const [isAlleyFlowOpen, setIsAlleyFlowOpen] = useState<boolean>(false);
-  const [isDocsSettingsOpen, setIsDocsSettingsOpen] = useState<boolean>(false);
-  const [docsSettingsTab, setDocsSettingsTab] = useState<'personas' | 'settings' | 'documentation' | 'rails'>('personas');
+  const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
+  const [isDocsOpen, setIsDocsOpen] = useState<boolean>(false);
   const [isSubmittingDossier, setIsSubmittingDossier] = useState<boolean>(false);
 
   // Dynamic Application Status Update & Immediate Active Loan Activation
@@ -445,10 +446,8 @@ export function App() {
           setAuthModalMode('register');
           setIsAuthModalOpen(true);
         }}
-        onOpenDocsAndSettings={(tab = 'personas') => {
-          setDocsSettingsTab(tab);
-          setIsDocsSettingsOpen(true);
-        }}
+        onOpenDocs={() => setIsDocsOpen(true)}
+        onOpenSettings={() => setIsSettingsOpen(true)}
         autoVoiceEnabled={autoVoiceEnabled}
         onToggleAutoVoice={() => {
           stopVoiceFeedback();
@@ -809,11 +808,10 @@ export function App() {
           setCurrentView('merchant-loans');
         }}
       />
-      {/* Documentation, Demo Personas & Settings Modal Hub */}
-      <DocumentationAndSettingsModal
-        isOpen={isDocsSettingsOpen}
-        onClose={() => setIsDocsSettingsOpen(false)}
-        initialTab={docsSettingsTab}
+      {/* Dedicated System Settings & Profile Modal */}
+      <SettingsModal
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
         merchants={merchantsMap}
         activeMerchantId={selectedMerchantId}
         onSelectMerchant={(id) => {
@@ -833,13 +831,18 @@ export function App() {
         }}
         activeEngine={activeAiEngine}
         onChangeEngine={(engine) => setActiveAiEngine(engine)}
-        onOpenOnboarding={() => setIsOnboardingModalOpen(true)}
-        onStartVoiceLoanWithPrompt={(prompt, lang) => {
-          if (lang) setSelectedLanguage(lang);
-          handleStartVoiceLoan(prompt);
+        onOpenOnboarding={() => {
+          setAuthModalMode('register');
+          setIsAuthModalOpen(true);
         }}
-        onOpenCapitalRails={() => setIsCapitalFlowModalOpen(true)}
+      />
+
+      {/* Dedicated Architecture, MCP & System Specifications Modal */}
+      <DocsSpecsModal
+        isOpen={isDocsOpen}
+        onClose={() => setIsDocsOpen(false)}
         onNavigateToMCP={() => setCurrentView('enterprise-integrations')}
+        onOpenCapitalRails={() => setIsCapitalFlowModalOpen(true)}
       />
 
       {/* Production-Grade Merchant Authentication Modal (Login / OTP / Register) */}
