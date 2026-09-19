@@ -58,13 +58,7 @@ class AuthService {
     } catch (e) {
       console.warn('Error reading session from localStorage:', e);
     }
-    // Default logged in session with M001 (Ramesh Kumar)
-    return {
-      isAuthenticated: true,
-      merchantId: 'M001',
-      loginTimestamp: new Date().toISOString(),
-      authMethod: 'quick_demo',
-    };
+    return null;
   }
 
   /**

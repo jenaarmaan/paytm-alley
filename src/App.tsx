@@ -27,7 +27,7 @@ import { FloatingAlleyWidget } from './components/FloatingAlleyWidget';
 import { AlleyFlowConsole } from './components/AlleyFlowConsole';
 import { SettingsModal } from './components/SettingsModal';
 import { DocsSpecsModal } from './components/DocsSpecsModal';
-import { CheckCircle2, Volume2, VolumeX, X } from 'lucide-react';
+import { CheckCircle2, Volume2, VolumeX, X, Lock } from 'lucide-react';
 import { speechService } from './services/speechService';
 import { authService } from './services/authService';
 import { getVoiceIntentAcknowledgement, getVoiceSubmissionAcknowledgement } from './services/translations';
@@ -67,7 +67,9 @@ export function App() {
   const [authModalMode, setAuthModalMode] = useState<'login' | 'register' | 'otp'>('login');
 
   // Navigation & Profile States
-  const [currentView, setCurrentView] = useState<string>('merchant-dashboard');
+  const [currentView, setCurrentView] = useState<string>(() => {
+    return authService.isAuthenticated() ? 'merchant-dashboard' : 'landing';
+  });
   const [selectedLanguage, setSelectedLanguage] = useState<SupportedLanguage>('Hinglish');
   const [isOnboardingModalOpen, setIsOnboardingModalOpen] = useState<boolean>(false);
 
@@ -346,6 +348,11 @@ export function App() {
 
   // Start fresh voice journey
   const handleStartVoiceLoan = (initialPrompt?: string) => {
+    if (!isAuthenticated) {
+      setAuthModalMode('login');
+      setIsAuthModalOpen(true);
+      return;
+    }
     stopVoiceFeedback();
     setCurrentView('merchant-voice');
     setJourneyStep('INPUT');
@@ -431,6 +438,18 @@ export function App() {
         currentView={currentView}
         onNavigate={(v) => {
           stopVoiceFeedback();
+          const merchantProtectedViews = [
+            'merchant-dashboard',
+            'merchant-voice',
+            'merchant-loans',
+            'merchant-health',
+            'insurance',
+          ];
+          if (!isAuthenticated && merchantProtectedViews.includes(v)) {
+            setAuthModalMode('login');
+            setIsAuthModalOpen(true);
+            return;
+          }
           setCurrentView(v);
         }}
         activeMerchant={activeMerchant}
@@ -485,7 +504,42 @@ export function App() {
 
         {/* VIEW 3: VOICE LOAN WORKFLOW */}
         {currentView === 'merchant-voice' && (
-          <div className="max-w-4xl mx-auto space-y-6">
+          !isAuthenticated ? (
+            <div className="max-w-lg mx-auto my-12 bg-white dark:bg-slate-900 rounded-3xl p-8 border border-slate-200 dark:border-slate-800 text-center shadow-xl space-y-6 animate-in fade-in-50 duration-300">
+              <div className="w-16 h-16 bg-emerald-50 dark:bg-emerald-950/60 rounded-2xl flex items-center justify-center mx-auto text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
+                <Lock className="w-8 h-8" />
+              </div>
+              <div className="space-y-2">
+                <h3 className="text-2xl font-black text-slate-900 dark:text-white">Merchant Authentication Required</h3>
+                <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                  To retrieve verified store cash flows, calculate personalized credit limits, and initiate an RBI-compliant voice loan, please log in or select your merchant profile first.
+                </p>
+              </div>
+              <div className="pt-2 flex flex-col sm:flex-row gap-3 justify-center">
+                <button
+                  id="btn-voice-auth-login"
+                  onClick={() => {
+                    setAuthModalMode('login');
+                    setIsAuthModalOpen(true);
+                  }}
+                  className="px-6 py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm shadow-lg shadow-emerald-600/20 transition-all cursor-pointer"
+                >
+                  Log In / Demo Profiles
+                </button>
+                <button
+                  id="btn-voice-auth-register"
+                  onClick={() => {
+                    setAuthModalMode('register');
+                    setIsAuthModalOpen(true);
+                  }}
+                  className="px-6 py-3 rounded-2xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 font-bold text-sm transition-all cursor-pointer"
+                >
+                  Register New Store
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="max-w-4xl mx-auto space-y-6">
             {/* Real-time 6-Stage Journey Breadcrumb */}
             <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xs p-3">
               <div className="flex items-center justify-between gap-2 overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden py-0.5 text-xs">
@@ -608,7 +662,8 @@ export function App() {
               />
             )}
           </div>
-        )}
+        )
+      )}
 
         {/* VIEW 4: EMBEDDED MICRO-INSURANCE SUITE */}
         {currentView === 'insurance' && (
@@ -771,7 +826,14 @@ export function App() {
       </footer>
       {/* Floating Alley AI Voice & Process Launcher */}
       <FloatingAlleyWidget
-        onClick={() => setIsAlleyFlowOpen(true)}
+        onClick={() => {
+          if (!isAuthenticated) {
+            setAuthModalMode('login');
+            setIsAuthModalOpen(true);
+            return;
+          }
+          setIsAlleyFlowOpen(true);
+        }}
         language={selectedLanguage}
         activeEngine={activeAiEngine}
       />
