@@ -26,6 +26,7 @@ export interface Merchant {
   upiHandle?: string;
   tradeSector?: string;
   avatarUrl?: string;
+  role?: 'merchant' | 'lender';
 }
 
 export interface LoanIntent {

@@ -141,6 +141,27 @@ export const SEEDED_MERCHANTS: Record<string, Merchant> = {
     activeCreditLines: 0,
     upiHandle: 'murugan.puja@paytm',
     tradeSector: 'Temple Flowers & Sacred Goods',
+    role: 'merchant',
+  },
+  L001: {
+    merchantId: 'L001',
+    name: 'Aditya Sharma',
+    businessName: 'Samriddhi Microfinance Bank Ltd',
+    businessType: 'Institutional Lender & NBFC Underwriter',
+    businessVintageMonths: 120, // 10 years institutional banking
+    monthlySales: 48000000, // ₹4.8 Cr portfolio capital
+    monthlyCashflow: 22000000,
+    existingEMI: 0,
+    repaymentHistory: 'excellent',
+    digitalTransactionScore: 99,
+    businessHealth: 'healthy',
+    location: 'Mumbai (HQ) • All-India Credit Desk',
+    preferredLanguage: 'English',
+    upiQrTransactionsPerMonth: 125000,
+    activeCreditLines: 124,
+    upiHandle: 'aditya.underwriting@samriddhi.bank',
+    tradeSector: 'Credit Underwriting & Risk Monitoring Desk',
+    role: 'lender',
   },
 };
 

@@ -80,7 +80,11 @@ export function App() {
     setSelectedMerchantId(merchant.merchantId);
     setSelectedLanguage(merchant.preferredLanguage);
     setIsAuthenticated(true);
-    setCurrentView('merchant-dashboard');
+    if (merchant.role === 'lender' || merchant.merchantId === 'L001') {
+      setCurrentView('admin-dashboard');
+    } else {
+      setCurrentView('merchant-dashboard');
+    }
   };
 
   // Handle Logout

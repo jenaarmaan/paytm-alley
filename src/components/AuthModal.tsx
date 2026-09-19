@@ -112,7 +112,13 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     }
   };
 
+  const [roleFilter, setRoleFilter] = useState<'all' | 'merchant' | 'lender'>('all');
+
   const merchantList = Object.values(merchants).filter((m) => {
+    const isLender = m.role === 'lender' || m.merchantId.startsWith('L');
+    if (roleFilter === 'merchant' && isLender) return false;
+    if (roleFilter === 'lender' && !isLender) return false;
+
     if (!searchQuery.trim()) return true;
     const query = searchQuery.toLowerCase();
     return (
@@ -140,7 +146,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             <div>
               <div className="flex items-center gap-2">
                 <h2 className="font-extrabold text-base sm:text-lg tracking-tight">
-                  {activeTab === 'login' ? 'Select Merchant Profile to Sign In' : 'Create & Onboard New Merchant'}
+                  {activeTab === 'login' ? 'Select Profile to Sign In' : 'Create & Onboard New Merchant'}
                 </h2>
                 <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
                   {activeTab === 'login' ? 'Instant Access' : 'New User Setup'}
@@ -148,7 +154,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               </div>
               <p className="text-xs text-slate-400">
                 {activeTab === 'login'
-                  ? '1-click login to authenticate and load store cash flow & UPI QR records'
+                  ? 'Sign in as a Bharat Merchant (Borrower) or Institutional Lending Partner (Underwriting Desk)'
                   : 'Register a new store profile with customized sales and language'}
               </p>
             </div>
@@ -175,7 +181,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             }`}
           >
             <Users className="w-4 h-4 text-emerald-500" />
-            <span>Select Existing Merchant (1-Click Login)</span>
+            <span>Select Demo Persona (Merchants &amp; Lenders)</span>
           </button>
 
           <button
@@ -199,92 +205,145 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           {activeTab === 'login' && (
             <div className="space-y-4">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xs">
-                <div>
-                  <h3 className="text-sm font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
-                    <Users className="w-4 h-4 text-emerald-500" />
-                    <span>Available Merchant Accounts</span>
-                  </h3>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                    Select any verified business persona to start testing voice loans and financial tools.
-                  </p>
+                {/* Persona filter pills */}
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <button
+                    type="button"
+                    onClick={() => setRoleFilter('all')}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                      roleFilter === 'all'
+                        ? 'bg-slate-900 dark:bg-emerald-600 text-white shadow-xs'
+                        : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200'
+                    }`}
+                  >
+                    All Personas ({Object.keys(merchants).length})
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setRoleFilter('merchant')}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                      roleFilter === 'merchant'
+                        ? 'bg-slate-900 dark:bg-emerald-600 text-white shadow-xs'
+                        : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200'
+                    }`}
+                  >
+                    🏪 Micro-Merchants ({Object.values(merchants).filter((m) => m.role !== 'lender' && !m.merchantId.startsWith('L')).length})
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setRoleFilter('lender')}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                      roleFilter === 'lender'
+                        ? 'bg-purple-700 text-white shadow-xs'
+                        : 'bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800 hover:bg-purple-100'
+                    }`}
+                  >
+                    🏦 Lending Partner Desk (1)
+                  </button>
                 </div>
+
                 <div className="flex items-center gap-2">
                   <input
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Search store, city, owner..."
+                    placeholder="Search name, bank, city..."
                     className="px-3 py-1.5 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 w-full sm:w-56"
                   />
                   <span className="text-xs font-mono font-bold text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2.5 py-1.5 rounded-xl whitespace-nowrap">
-                    {merchantList.length} Roles
+                    {merchantList.length} Active
                   </span>
                 </div>
               </div>
 
               {/* LIST VIEW (Table-Like High-Density List) */}
               <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden divide-y divide-slate-100 dark:divide-slate-800 shadow-xs">
-                {merchantList.map((m) => (
-                  <div
-                    key={m.merchantId}
-                    className="p-3.5 sm:p-4 hover:bg-slate-50 dark:hover:bg-slate-800/60 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-3"
-                  >
-                    {/* Left: Avatar & Identity */}
-                    <div className="flex items-center gap-3 min-w-[220px]">
-                      <div className="w-10 h-10 rounded-xl bg-slate-900 dark:bg-slate-800 text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-xs">
-                        {m.name.split(' ').map((n) => n[0]).join('').slice(0, 2)}
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-1.5">
-                          <span className="font-extrabold text-xs text-slate-900 dark:text-white">
-                            {m.name}
-                          </span>
-                          <BadgeCheck className="w-3.5 h-3.5 text-sky-500" />
-                          <span className="text-[10px] font-mono font-bold px-1.5 py-0.2 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
-                            {m.merchantId}
+                {merchantList.map((m) => {
+                  const isLender = m.role === 'lender' || m.merchantId.startsWith('L');
+                  return (
+                    <div
+                      key={m.merchantId}
+                      className={`p-3.5 sm:p-4 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
+                        isLender
+                          ? 'bg-purple-50/50 dark:bg-purple-950/20 hover:bg-purple-50 dark:hover:bg-purple-950/40 border-l-4 border-l-purple-600'
+                          : 'hover:bg-slate-50 dark:hover:bg-slate-800/60'
+                      }`}
+                    >
+                      {/* Left: Avatar & Identity */}
+                      <div className="flex items-center gap-3 min-w-[240px]">
+                        <div className={`w-10 h-10 rounded-xl text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-xs ${
+                          isLender
+                            ? 'bg-gradient-to-tr from-purple-700 via-indigo-600 to-indigo-900'
+                            : 'bg-slate-900 dark:bg-slate-800'
+                        }`}>
+                          {isLender ? '🏛️' : m.name.split(' ').map((n) => n[0]).join('').slice(0, 2)}
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-extrabold text-xs text-slate-900 dark:text-white">
+                              {m.name}
+                            </span>
+                            {isLender ? (
+                              <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300 border border-purple-300 dark:border-purple-800">
+                                Institutional Lender
+                              </span>
+                            ) : (
+                              <BadgeCheck className="w-3.5 h-3.5 text-sky-500" />
+                            )}
+                            <span className="text-[10px] font-mono font-bold px-1.5 py-0.2 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
+                              {m.merchantId}
+                            </span>
+                          </div>
+                          <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium block">
+                            {m.businessName} • {m.tradeSector || m.businessType}
                           </span>
                         </div>
-                        <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium block">
-                          {m.businessName} • {m.tradeSector || m.businessType}
-                        </span>
                       </div>
+
+                      {/* Middle: Location & Metrics */}
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-6 text-xs text-slate-600 dark:text-slate-400 sm:px-2">
+                        <div>
+                          <span className="text-[10px] text-slate-400 block">
+                            {isLender ? 'Portfolio Capital' : 'Monthly Turnover'}
+                          </span>
+                          <span className={`font-mono font-extrabold text-xs ${isLender ? 'text-purple-700 dark:text-purple-300' : 'text-emerald-600 dark:text-emerald-400'}`}>
+                            {isLender ? '₹4.80 Crore' : `₹${(m.monthlySales || 150000).toLocaleString('en-IN')}`}
+                          </span>
+                        </div>
+
+                        <div>
+                          <span className="text-[10px] text-slate-400 block">Location &amp; Scope</span>
+                          <span className="font-medium text-slate-800 dark:text-slate-200 text-xs truncate block max-w-[130px]">
+                            {m.location}
+                          </span>
+                        </div>
+
+                        <div className="hidden sm:block">
+                          <span className="text-[10px] text-slate-400 block">
+                            {isLender ? 'Active Line' : 'Dialect & Score'}
+                          </span>
+                          <span className="font-medium text-slate-800 dark:text-slate-200 text-xs">
+                            {isLender ? '124 Loans Managed' : `${m.preferredLanguage} (${m.digitalTransactionScore}/100)`}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Right: 1-Click Action Button */}
+                      <button
+                        onClick={() => handleQuickLogin(m.merchantId)}
+                        disabled={isLoading}
+                        className={`px-4 py-2 rounded-xl text-white text-xs font-bold transition-all flex items-center justify-center gap-1.5 shrink-0 shadow-xs cursor-pointer ${
+                          isLender
+                            ? 'bg-purple-700 hover:bg-purple-600 shadow-purple-700/20'
+                            : 'bg-slate-900 dark:bg-slate-800 hover:bg-emerald-600 dark:hover:bg-emerald-600'
+                        }`}
+                      >
+                        <LogIn className="w-3.5 h-3.5" />
+                        <span>{isLender ? 'Log In as Lender Desk' : `Log In as ${m.name.split(' ')[0]}`}</span>
+                      </button>
                     </div>
-
-                    {/* Middle: Location & Monthly Metrics */}
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-6 text-xs text-slate-600 dark:text-slate-400 sm:px-2">
-                      <div>
-                        <span className="text-[10px] text-slate-400 block">Monthly Turnover</span>
-                        <span className="font-mono font-extrabold text-emerald-600 dark:text-emerald-400 text-xs">
-                          ₹{(m.monthlySales || 150000).toLocaleString('en-IN')}
-                        </span>
-                      </div>
-
-                      <div>
-                        <span className="text-[10px] text-slate-400 block">Location</span>
-                        <span className="font-medium text-slate-800 dark:text-slate-200 text-xs truncate block max-w-[120px]">
-                          {m.location}
-                        </span>
-                      </div>
-
-                      <div className="hidden sm:block">
-                        <span className="text-[10px] text-slate-400 block">Dialect &amp; Score</span>
-                        <span className="font-medium text-slate-800 dark:text-slate-200 text-xs">
-                          {m.preferredLanguage} ({m.digitalTransactionScore}/100)
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Right: 1-Click Action Button */}
-                    <button
-                      onClick={() => handleQuickLogin(m.merchantId)}
-                      disabled={isLoading}
-                      className="px-4 py-2 rounded-xl bg-slate-900 dark:bg-slate-800 hover:bg-emerald-600 dark:hover:bg-emerald-600 text-white text-xs font-bold transition-all flex items-center justify-center gap-1.5 shrink-0 shadow-xs cursor-pointer"
-                    >
-                      <LogIn className="w-3.5 h-3.5" />
-                      <span>Log In as {m.name.split(' ')[0]}</span>
-                    </button>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}
