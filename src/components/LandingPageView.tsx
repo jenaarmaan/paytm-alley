@@ -60,7 +60,7 @@ export const LandingPageView: React.FC<LandingPageViewProps> = ({
             className="inline-flex items-center gap-2.5 px-8 py-4 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-black text-sm shadow-xl shadow-emerald-600/25 transition-all hover:scale-105 active:scale-95"
           >
             <Mic className="w-5 h-5 text-emerald-100" />
-            <span>Launch Merchant Voice Demo</span>
+            <span>Launch Alley Voice Demo</span>
             <ArrowRight className="w-4 h-4 ml-1" />
           </button>
 

@@ -38,7 +38,7 @@ export const Navbar: React.FC<NavbarProps> = ({
     { id: 'landing', label: 'Overview', icon: Store },
     { id: 'merchant-onboarding', label: 'Onboard', icon: UserPlus, badge: 'Instant' },
     { id: 'merchant-dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { id: 'merchant-voice', label: 'Voice Loan', icon: Mic, highlight: true },
+    { id: 'merchant-voice', label: 'Alley Voice', icon: Mic, highlight: true },
     { id: 'insurance', label: 'Sachet Insurance', icon: Shield, badge: '₹3/d' },
     { id: 'merchant-loans', label: 'My Loans', icon: CreditCard },
     { id: 'merchant-health', label: 'Business Health', icon: TrendingUp },

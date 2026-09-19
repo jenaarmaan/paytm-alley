@@ -203,7 +203,7 @@ export const VoiceRecorder: React.FC<VoiceRecorderProps> = ({
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200/80 shadow-2xs">
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
             <Volume2 className="w-3.5 h-3.5 text-emerald-600" />
-            <span>Multilingual Voice Interface • {language}</span>
+            <span>Alley • Indic Voice Agent ({language})</span>
           </div>
           {onToggleAutoVoice && (
             <button
@@ -222,10 +222,10 @@ export const VoiceRecorder: React.FC<VoiceRecorderProps> = ({
           )}
         </div>
         <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
-          {t.tellUsWhatYouNeed}
+          Talk to Alley — {t.tellUsWhatYouNeed}
         </h2>
         <p className="text-xs sm:text-sm text-slate-600 mt-2 leading-relaxed">
-          Speak naturally in your preferred language. Mention the amount, stock requirements, store renovation, or working capital needs.
+          Speak naturally in your preferred language. Tell Alley about your working capital, festive stock, or store expansion needs.
         </p>
       </div>
 
